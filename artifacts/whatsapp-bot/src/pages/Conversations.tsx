@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useListConversations, useGetConversationMessages, useSendMessage } from "@workspace/api-client-react";
 import { format } from "date-fns";
-import { Search, Send, Bot, User, CheckCircle2, Clock, XCircle, BotOff } from "lucide-react";
+import { Search, Send, Bot, User, CheckCircle2, Clock, XCircle, BotOff, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
