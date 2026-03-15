@@ -1,22 +1,34 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API para Bot de Ventas WhatsApp con OpenClaw y Ollama
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: bot
+    description: Control del bot de WhatsApp
+  - name: conversations
+    description: Conversaciones de WhatsApp
+  - name: contacts
+    description: Contactos y clientes
+  - name: products
+    description: Productos y catálogo
+  - name: automation
+    description: Reglas de automatización
+  - name: ollama
+    description: Configuración y modelos de Ollama
+  - name: messages
+    description: Mensajes enviados/recibidos
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,473 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Estado del bot de WhatsApp
+      responses:
+        "200":
+          description: Estado del bot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/config:
+    get:
+      operationId: getBotConfig
+      tags: [bot]
+      summary: Obtener configuración del bot
+      responses:
+        "200":
+          description: Configuración del bot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotConfig"
+    put:
+      operationId: updateBotConfig
+      tags: [bot]
+      summary: Actualizar configuración del bot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BotConfigUpdate"
+      responses:
+        "200":
+          description: Configuración actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotConfig"
+
+  /bot/qr:
+    get:
+      operationId: getBotQR
+      tags: [bot]
+      summary: Obtener código QR para conectar WhatsApp
+      responses:
+        "200":
+          description: QR code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCode"
+
+  /bot/connect:
+    post:
+      operationId: connectBot
+      tags: [bot]
+      summary: Iniciar conexión del bot
+      responses:
+        "200":
+          description: Bot iniciando conexión
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/disconnect:
+    post:
+      operationId: disconnectBot
+      tags: [bot]
+      summary: Desconectar el bot
+      responses:
+        "200":
+          description: Bot desconectado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: Listar conversaciones activas
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: offset
+          in: query
+          schema:
+            type: number
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de conversaciones
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationList"
+
+  /conversations/{id}:
+    get:
+      operationId: getConversation
+      tags: [conversations]
+      summary: Obtener conversación por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detalles de la conversación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+
+  /conversations/{id}/messages:
+    get:
+      operationId: getConversationMessages
+      tags: [conversations]
+      summary: Mensajes de una conversación
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Mensajes de la conversación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+
+  /conversations/{id}/send:
+    post:
+      operationId: sendMessage
+      tags: [conversations]
+      summary: Enviar mensaje a un número
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "200":
+          description: Mensaje enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /contacts:
+    get:
+      operationId: listContacts
+      tags: [contacts]
+      summary: Listar contactos/clientes
+      responses:
+        "200":
+          description: Lista de contactos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactList"
+    post:
+      operationId: createContact
+      tags: [contacts]
+      summary: Crear nuevo contacto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Contacto creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /contacts/{id}:
+    get:
+      operationId: getContact
+      tags: [contacts]
+      summary: Obtener contacto por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+    put:
+      operationId: updateContact
+      tags: [contacts]
+      summary: Actualizar contacto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactRequest"
+      responses:
+        "200":
+          description: Contacto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: Listar productos del catálogo
+      responses:
+        "200":
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Crear producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Actualizar producto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+      responses:
+        "200":
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Eliminar producto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Producto eliminado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /automation/rules:
+    get:
+      operationId: listAutomationRules
+      tags: [automation]
+      summary: Listar reglas de automatización
+      responses:
+        "200":
+          description: Reglas de automatización
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRuleList"
+    post:
+      operationId: createAutomationRule
+      tags: [automation]
+      summary: Crear regla de automatización
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAutomationRuleRequest"
+      responses:
+        "201":
+          description: Regla creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRule"
+
+  /automation/rules/{id}:
+    put:
+      operationId: updateAutomationRule
+      tags: [automation]
+      summary: Actualizar regla de automatización
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAutomationRuleRequest"
+      responses:
+        "200":
+          description: Regla actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRule"
+    delete:
+      operationId: deleteAutomationRule
+      tags: [automation]
+      summary: Eliminar regla
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Regla eliminada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+
+  /ollama/models:
+    get:
+      operationId: listOllamaModels
+      tags: [ollama]
+      summary: Listar modelos disponibles en Ollama
+      responses:
+        "200":
+          description: Modelos disponibles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaModelList"
+
+  /ollama/config:
+    get:
+      operationId: getOllamaConfig
+      tags: [ollama]
+      summary: Obtener configuración de Ollama
+      responses:
+        "200":
+          description: Configuración de Ollama
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaConfig"
+    put:
+      operationId: updateOllamaConfig
+      tags: [ollama]
+      summary: Actualizar configuración de Ollama
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OllamaConfigUpdate"
+      responses:
+        "200":
+          description: Configuración actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaConfig"
+
+  /ollama/test:
+    post:
+      operationId: testOllamaConnection
+      tags: [ollama]
+      summary: Probar conexión con Ollama
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OllamaTestRequest"
+      responses:
+        "200":
+          description: Resultado del test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaTestResult"
+
+  /messages/stats:
+    get:
+      operationId: getMessageStats
+      tags: [messages]
+      summary: Estadísticas de mensajes
+      responses:
+        "200":
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +510,504 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    BotStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        phone:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [disconnected, connecting, connected, qr_pending]
+        uptime:
+          type: number
+          nullable: true
+        messagesHandled:
+          type: number
+      required: [connected, status, messagesHandled]
+
+    BotConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        businessName:
+          type: string
+        welcomeMessage:
+          type: string
+        systemPrompt:
+          type: string
+        ollamaUrl:
+          type: string
+        ollamaModel:
+          type: string
+        autoReply:
+          type: boolean
+        workingHoursStart:
+          type: string
+        workingHoursEnd:
+          type: string
+        offHoursMessage:
+          type: string
+        allowedNumbers:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, businessName, welcomeMessage, systemPrompt, ollamaUrl, ollamaModel, autoReply, createdAt, updatedAt]
+
+    BotConfigUpdate:
+      type: object
+      properties:
+        businessName:
+          type: string
+        welcomeMessage:
+          type: string
+        systemPrompt:
+          type: string
+        ollamaUrl:
+          type: string
+        ollamaModel:
+          type: string
+        autoReply:
+          type: boolean
+        workingHoursStart:
+          type: string
+        workingHoursEnd:
+          type: string
+        offHoursMessage:
+          type: string
+        allowedNumbers:
+          type: array
+          items:
+            type: string
+
+    QRCode:
+      type: object
+      properties:
+        qr:
+          type: string
+          nullable: true
+        status:
+          type: string
+      required: [status]
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+        contactPhone:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        lastMessage:
+          type: string
+          nullable: true
+        lastMessageAt:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, closed, pending]
+        unreadCount:
+          type: number
+        aiHandled:
+          type: boolean
+        totalMessages:
+          type: number
+        createdAt:
+          type: string
+      required: [id, contactPhone, status, unreadCount, aiHandled, totalMessages, createdAt]
+
+    ConversationList:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Conversation"
+        total:
+          type: number
+      required: [conversations, total]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        content:
+          type: string
+        direction:
+          type: string
+          enum: [inbound, outbound]
+        aiGenerated:
+          type: boolean
+        timestamp:
+          type: string
+        status:
+          type: string
+          enum: [sent, delivered, read, failed]
+      required: [id, conversationId, content, direction, aiGenerated, timestamp, status]
+
+    MessageList:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        total:
+          type: number
+      required: [messages, total]
+
+    SendMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+        stage:
+          type: string
+          enum: [lead, prospect, customer, vip]
+        totalPurchases:
+          type: number
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, phone, stage, totalPurchases, createdAt, updatedAt]
+
+    ContactList:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Contact"
+        total:
+          type: number
+      required: [contacts, total]
+
+    CreateContactRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        stage:
+          type: string
+          enum: [lead, prospect, customer, vip]
+      required: [phone]
+
+    UpdateContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        stage:
+          type: string
+          enum: [lead, prospect, customer, vip]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+        category:
+          type: string
+          nullable: true
+        inStock:
+          type: boolean
+        imageUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, name, price, inStock, createdAt, updatedAt]
+
+    ProductList:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: number
+      required: [products, total]
+
+    CreateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        inStock:
+          type: boolean
+        imageUrl:
+          type: string
+      required: [name, price]
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        inStock:
+          type: boolean
+        imageUrl:
+          type: string
+
+    AutomationRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        trigger:
+          type: string
+          enum: [keyword, first_message, inactivity, purchase]
+        triggerValue:
+          type: string
+          nullable: true
+        action:
+          type: string
+          enum: [send_message, send_catalog, tag_contact, assign_stage, notify_human]
+        actionValue:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        priority:
+          type: number
+        createdAt:
+          type: string
+      required: [id, name, trigger, action, enabled, priority, createdAt]
+
+    AutomationRuleList:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationRule"
+        total:
+          type: number
+      required: [rules, total]
+
+    CreateAutomationRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        trigger:
+          type: string
+          enum: [keyword, first_message, inactivity, purchase]
+        triggerValue:
+          type: string
+        action:
+          type: string
+          enum: [send_message, send_catalog, tag_contact, assign_stage, notify_human]
+        actionValue:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: number
+      required: [name, trigger, action]
+
+    UpdateAutomationRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        trigger:
+          type: string
+          enum: [keyword, first_message, inactivity, purchase]
+        triggerValue:
+          type: string
+        action:
+          type: string
+          enum: [send_message, send_catalog, tag_contact, assign_stage, notify_human]
+        actionValue:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: number
+
+    OllamaModel:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: number
+        family:
+          type: string
+        parameterSize:
+          type: string
+        quantization:
+          type: string
+      required: [name, size, family, parameterSize, quantization]
+
+    OllamaModelList:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            $ref: "#/components/schemas/OllamaModel"
+        connected:
+          type: boolean
+      required: [models, connected]
+
+    OllamaConfig:
+      type: object
+      properties:
+        url:
+          type: string
+        model:
+          type: string
+        temperature:
+          type: number
+        maxTokens:
+          type: number
+        connected:
+          type: boolean
+      required: [url, model, temperature, maxTokens, connected]
+
+    OllamaConfigUpdate:
+      type: object
+      properties:
+        url:
+          type: string
+        model:
+          type: string
+        temperature:
+          type: number
+        maxTokens:
+          type: number
+
+    OllamaTestRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        model:
+          type: string
+      required: [message]
+
+    OllamaTestResult:
+      type: object
+      properties:
+        response:
+          type: string
+        model:
+          type: string
+        latencyMs:
+          type: number
+        success:
+          type: boolean
+      required: [response, model, latencyMs, success]
+
+    MessageStats:
+      type: object
+      properties:
+        totalMessages:
+          type: number
+        inbound:
+          type: number
+        outbound:
+          type: number
+        aiGenerated:
+          type: number
+        todayMessages:
+          type: number
+        activeConversations:
+          type: number
+        avgResponseTimeMs:
+          type: number
+      required: [totalMessages, inbound, outbound, aiGenerated, todayMessages, activeConversations, avgResponseTimeMs]
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        id:
+          type: string
+      required: [success, id]

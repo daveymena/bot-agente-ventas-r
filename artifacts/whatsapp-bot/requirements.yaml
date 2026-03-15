@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For page transitions and smooth UI animations"
+  "recharts": "For dashboard charts and statistics"
+  "date-fns": "For formatting conversation and message timestamps"
+  "qrcode.react": "For rendering the WhatsApp connection QR code"
+  "lucide-react": "For beautiful consistent iconography"
+
+images:
+  - path: "artifacts/whatsapp-bot/public/images/auth-bg.png"
+    description: "Abstract modern dark tech background with subtle WhatsApp green glowing waves and neon accents, clean and professional"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated Orval hooks from @workspace/api-client-react
+  - Implementing dark theme natively via CSS variables
