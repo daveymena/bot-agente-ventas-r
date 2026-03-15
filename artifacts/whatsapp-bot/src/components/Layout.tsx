@@ -7,7 +7,10 @@ import {
   Zap, 
   Settings, 
   Bot,
-  LogOut
+  LogOut,
+  BrainCircuit,
+  Code2,
+  BookMarked,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -18,6 +21,12 @@ const navItems = [
   { icon: ShoppingBag, label: "Products", href: "/products" },
   { icon: Zap, label: "Automations", href: "/automations" },
   { icon: Settings, label: "Settings", href: "/settings" },
+];
+
+const agentNavItems = [
+  { icon: BrainCircuit, label: "Agent", href: "/agent" },
+  { icon: Code2, label: "Skills", href: "/skills" },
+  { icon: BookMarked, label: "Memory", href: "/memory" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -37,7 +46,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <p className="text-[10px] uppercase font-bold text-muted-foreground/50 tracking-widest px-4 mb-2">WhatsApp Bot</p>
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
@@ -63,6 +73,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          
+          <div className="pt-4">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground/50 tracking-widest px-4 mb-2">OpenClaw Agent</p>
+            {agentNavItems.map((item) => {
+              const isActive = location === item.href;
+              return (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group
+                    ${isActive 
+                      ? "text-primary font-medium" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"}
+                  `}
+                >
+                  {isActive && (
+                    <motion.div 
+                      layoutId="activeNavAgent" 
+                      className="absolute inset-0 bg-primary/10 rounded-xl border border-primary/20"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <item.icon className={`w-5 h-5 relative z-10 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground transition-colors"}`} />
+                  <span className="relative z-10">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="p-4 border-t border-border/50">

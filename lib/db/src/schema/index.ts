@@ -4,3 +4,6 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./products";
 export * from "./automationRules";
+export * from "./memories";
+export * from "./skills";
+export * from "./agentSessions";

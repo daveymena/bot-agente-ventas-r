@@ -7,6 +7,9 @@ import productsRouter from "./products";
 import automationRouter from "./automation";
 import ollamaRouter from "./ollama";
 import messagesRouter from "./messages";
+import agentRouter from "./agent";
+import skillsRouter from "./skills";
+import memoryRouter from "./memory";
 
 const router: IRouter = Router();
 
@@ -18,5 +21,8 @@ router.use("/products", productsRouter);
 router.use("/automation", automationRouter);
 router.use("/ollama", ollamaRouter);
 router.use("/messages", messagesRouter);
+router.use("/agent", agentRouter);
+router.use("/skills", skillsRouter);
+router.use("/memory", memoryRouter);
 
 export default router;
