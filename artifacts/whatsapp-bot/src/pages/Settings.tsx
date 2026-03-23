@@ -132,23 +132,31 @@ function BotConfigForm() {
             <div className="space-y-3 md:col-span-2">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Payment Methods</label>
               <div className="grid grid-cols-2 gap-3">
-                {[
+                {([
                   { id: "cash", label: "💵 Efectivo / Cash" },
                   { id: "card", label: "💳 Tarjeta / Card" },
                   { id: "paypal", label: "🅿️ PayPal" },
                   { id: "mercadolibre", label: "🛒 MercadoLibre" },
-                ].map(pm => {
+                ] as const).map(pm => {
                   const methods: string[] = formData.paymentMethods || [];
-                  const checked = methods.includes(pm.id);
+                  const active = methods.includes(pm.id);
                   return (
-                    <div key={pm.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${checked ? 'bg-primary/10 border-primary/30' : 'bg-secondary/30 border-border/50'}`}
+                    <button
+                      key={pm.id}
+                      type="button"
                       onClick={() => {
-                        const updated = checked ? methods.filter((m: string) => m !== pm.id) : [...methods, pm.id];
-                        setFormData({...formData, paymentMethods: updated});
-                      }}>
-                      <Switch checked={checked} onCheckedChange={() => {}} tabIndex={-1} />
+                        const updated = active
+                          ? methods.filter((m: string) => m !== pm.id)
+                          : [...methods, pm.id];
+                        setFormData((prev: any) => ({ ...prev, paymentMethods: updated }));
+                      }}
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-left w-full ${active ? 'bg-primary/10 border-primary/30' : 'bg-secondary/30 border-border/50'}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${active ? 'bg-primary border-primary' : 'border-muted-foreground/40'}`}>
+                        {active && <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />}
+                      </div>
                       <span className="text-sm font-medium text-foreground">{pm.label}</span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

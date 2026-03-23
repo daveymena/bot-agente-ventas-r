@@ -18,6 +18,9 @@ export const botConfigTable = pgTable("bot_config", {
   allowedNumbers: text("allowed_numbers").default(""),
   paymentMethods: text("payment_methods").default("cash,card,paypal,mercadolibre"),
   language: text("language").notNull().default("es"),
+  aiProvider: text("ai_provider").notNull().default("ollama"),
+  aiApiKey: text("ai_api_key").default(""),
+  aiModel: text("ai_model").default(""),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

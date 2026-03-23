@@ -11,6 +11,7 @@ import {
   BrainCircuit,
   Code2,
   BookMarked,
+  Layers,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -27,6 +28,7 @@ const agentNavItems = [
   { icon: BrainCircuit, label: "Agent", href: "/agent" },
   { icon: Code2, label: "Skills", href: "/skills" },
   { icon: BookMarked, label: "Memory", href: "/memory" },
+  { icon: Layers, label: "AI Providers", href: "/ai-providers" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

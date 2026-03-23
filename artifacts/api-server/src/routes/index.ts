@@ -10,6 +10,7 @@ import messagesRouter from "./messages";
 import agentRouter from "./agent";
 import skillsRouter from "./skills";
 import memoryRouter from "./memory";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use("/messages", messagesRouter);
 router.use("/agent", agentRouter);
 router.use("/skills", skillsRouter);
 router.use("/memory", memoryRouter);
+router.use("/ai", aiRouter);
 
 export default router;

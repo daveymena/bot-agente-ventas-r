@@ -12,6 +12,7 @@ import Settings from "@/pages/Settings";
 import Agent from "@/pages/Agent";
 import Skills from "@/pages/Skills";
 import Memory from "@/pages/Memory";
+import AIProviders from "@/pages/AIProviders";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ function Router() {
         <Route path="/agent" component={Agent} />
         <Route path="/skills" component={Skills} />
         <Route path="/memory" component={Memory} />
+        <Route path="/ai-providers" component={AIProviders} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
