@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, Server, Save, Loader2, PlayCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { Bot, Server, Save, Loader2, PlayCircle, CheckCircle2, AlertCircle, CreditCard, Globe } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function Settings() {
@@ -115,6 +115,43 @@ function BotConfigForm() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Working Hours End</label>
               <Input type="time" value={formData.workingHoursEnd || ''} onChange={e => setFormData({...formData, workingHoursEnd: e.target.value})} className="bg-background border-border/50" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Globe className="w-3.5 h-3.5" /> Language</label>
+              <Select value={formData.language || 'es'} onValueChange={v => setFormData({...formData, language: v})}>
+                <SelectTrigger className="bg-background border-border/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="es">🇲🇽 Español</SelectItem>
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="pt">🇧🇷 Português</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3 md:col-span-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2"><CreditCard className="w-3.5 h-3.5" /> Payment Methods</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: "cash", label: "💵 Efectivo / Cash" },
+                  { id: "card", label: "💳 Tarjeta / Card" },
+                  { id: "paypal", label: "🅿️ PayPal" },
+                  { id: "mercadolibre", label: "🛒 MercadoLibre" },
+                ].map(pm => {
+                  const methods: string[] = formData.paymentMethods || [];
+                  const checked = methods.includes(pm.id);
+                  return (
+                    <div key={pm.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${checked ? 'bg-primary/10 border-primary/30' : 'bg-secondary/30 border-border/50'}`}
+                      onClick={() => {
+                        const updated = checked ? methods.filter((m: string) => m !== pm.id) : [...methods, pm.id];
+                        setFormData({...formData, paymentMethods: updated});
+                      }}>
+                      <Switch checked={checked} onCheckedChange={() => {}} tabIndex={-1} />
+                      <span className="text-sm font-medium text-foreground">{pm.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
           

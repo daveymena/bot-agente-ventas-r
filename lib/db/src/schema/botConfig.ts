@@ -16,6 +16,8 @@ export const botConfigTable = pgTable("bot_config", {
   workingHoursEnd: varchar("working_hours_end", { length: 5 }).default("18:00"),
   offHoursMessage: text("off_hours_message").default("Gracias por contactarnos. Actualmente estamos fuera de horario. Te responderemos pronto."),
   allowedNumbers: text("allowed_numbers").default(""),
+  paymentMethods: text("payment_methods").default("cash,card,paypal,mercadolibre"),
+  language: text("language").notNull().default("es"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

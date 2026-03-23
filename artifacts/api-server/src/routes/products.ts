@@ -48,6 +48,24 @@ router.delete("/:id", async (req, res) => {
   res.json({ success: true, id: req.params.id });
 });
 
+router.post("/import/json", async (req, res) => {
+  const items = req.body;
+  if (!Array.isArray(items)) return res.status(400).json({ error: "Expected a JSON array of products" });
+  const valid = items.filter((p: any) => p.name && p.price !== undefined);
+  if (!valid.length) return res.status(400).json({ error: "No valid products found. Each needs 'name' and 'price'" });
+  const inserted = await db.insert(productsTable).values(
+    valid.map((p: any) => ({
+      name: String(p.name),
+      description: p.description ? String(p.description) : null,
+      price: Number(p.price),
+      category: p.category ? String(p.category) : null,
+      inStock: p.inStock !== false && p.in_stock !== false,
+      imageUrl: p.imageUrl ?? p.image_url ?? null,
+    }))
+  ).returning();
+  res.status(201).json({ imported: inserted.length, products: inserted.map(formatProduct) });
+});
+
 function formatProduct(p: typeof productsTable.$inferSelect) {
   return {
     id: p.id,

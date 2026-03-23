@@ -5,11 +5,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Package, Edit2, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, Package, Edit2, Trash2, Loader2, Image as ImageIcon, Upload, CheckCircle2, XCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function JsonImportButton({ onDone }: { onDone: () => void }) {
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    setStatus(null);
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const res = await fetch(`${BASE}/api/products/import/json`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus({ ok: true, msg: `✓ ${data.imported} productos importados` });
+        onDone();
+      } else {
+        setStatus({ ok: false, msg: data.error || "Error importing" });
+      }
+    } catch (err) {
+      setStatus({ ok: false, msg: "JSON inválido o error de red" });
+    }
+    setLoading(false);
+    e.target.value = "";
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {status && (
+        <span className={`text-xs font-medium flex items-center gap-1 ${status.ok ? "text-primary" : "text-destructive"}`}>
+          {status.ok ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+          {status.msg}
+        </span>
+      )}
+      <label className={`cursor-pointer flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl border border-border/50 bg-secondary/50 hover:bg-secondary transition-colors ${loading ? "opacity-60 pointer-events-none" : ""}`}>
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        Import JSON
+        <input type="file" accept=".json" className="hidden" onChange={handleFile} />
+      </label>
+    </div>
+  );
+}
+
 export default function Products() {
-  const { data, isLoading } = useListProducts();
+  const { data, isLoading, refetch } = useListProducts();
 
   return (
     <div className="space-y-6">
@@ -18,7 +68,10 @@ export default function Products() {
           <h1 className="text-3xl font-display font-bold text-foreground">Catalog</h1>
           <p className="text-muted-foreground mt-1">Products available for the bot to sell.</p>
         </div>
-        <ProductDialog mode="create" />
+        <div className="flex items-center gap-3">
+          <JsonImportButton onDone={() => refetch()} />
+          <ProductDialog mode="create" />
+        </div>
       </div>
 
       {isLoading ? (

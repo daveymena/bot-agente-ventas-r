@@ -11,6 +11,7 @@ export const conversationsTable = pgTable("conversations", {
   status: text("status").notNull().default("active"),
   unreadCount: integer("unread_count").notNull().default(0),
   aiHandled: boolean("ai_handled").notNull().default(false),
+  salesStage: text("sales_stage").notNull().default("welcome"),
   totalMessages: integer("total_messages").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -38,7 +38,11 @@ router.get("/status", async (_req, res) => {
 
 router.get("/config", async (_req, res) => {
   const config = await ensureConfig();
-  res.json({
+  res.json(formatConfig(config));
+});
+
+function formatConfig(config: typeof botConfigTable.$inferSelect) {
+  return {
     id: config.id,
     businessName: config.businessName,
     welcomeMessage: config.welcomeMessage,
@@ -50,10 +54,12 @@ router.get("/config", async (_req, res) => {
     workingHoursEnd: config.workingHoursEnd,
     offHoursMessage: config.offHoursMessage,
     allowedNumbers: config.allowedNumbers ? config.allowedNumbers.split(",").filter(Boolean) : [],
+    paymentMethods: (config as any).paymentMethods ? (config as any).paymentMethods.split(",").filter(Boolean) : [],
+    language: (config as any).language ?? "es",
     createdAt: config.createdAt.toISOString(),
     updatedAt: config.updatedAt.toISOString(),
-  });
-});
+  };
+}
 
 router.put("/config", async (req, res) => {
   const body = req.body;
@@ -70,25 +76,13 @@ router.put("/config", async (req, res) => {
   if (body.workingHoursEnd !== undefined) updates.workingHoursEnd = body.workingHoursEnd;
   if (body.offHoursMessage !== undefined) updates.offHoursMessage = body.offHoursMessage;
   if (body.allowedNumbers !== undefined) updates.allowedNumbers = Array.isArray(body.allowedNumbers) ? body.allowedNumbers.join(",") : body.allowedNumbers;
+  if (body.paymentMethods !== undefined) (updates as any).paymentMethods = Array.isArray(body.paymentMethods) ? body.paymentMethods.join(",") : body.paymentMethods;
+  if (body.language !== undefined) (updates as any).language = body.language;
 
   await db.update(botConfigTable).set(updates).where(eq(botConfigTable.id, "default"));
   
   const config = await ensureConfig();
-  res.json({
-    id: config.id,
-    businessName: config.businessName,
-    welcomeMessage: config.welcomeMessage,
-    systemPrompt: config.systemPrompt,
-    ollamaUrl: config.ollamaUrl,
-    ollamaModel: config.ollamaModel,
-    autoReply: config.autoReply,
-    workingHoursStart: config.workingHoursStart,
-    workingHoursEnd: config.workingHoursEnd,
-    offHoursMessage: config.offHoursMessage,
-    allowedNumbers: config.allowedNumbers ? config.allowedNumbers.split(",").filter(Boolean) : [],
-    createdAt: config.createdAt.toISOString(),
-    updatedAt: config.updatedAt.toISOString(),
-  });
+  res.json(formatConfig(config));
 });
 
 router.get("/qr", (_req, res) => {
