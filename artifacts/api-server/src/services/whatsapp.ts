@@ -2,6 +2,7 @@ import {
   default as makeWASocket,
   DisconnectReason,
   useMultiFileAuthState,
+  fetchLatestBaileysVersion,
   type WASocket,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
@@ -61,13 +62,19 @@ class WhatsAppService {
 
     try {
       const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+      console.log(`[VentaFlow] Usando WhatsApp Web v${version.join(".")} (latest=${isLatest})`);
 
       this.sock = makeWASocket({
+        version,
         auth: authState,
-        printQRInTerminal: false,
-        browser: ["VentaFlow", "Chrome", "1.0.0"],
+        browser: ["VentaFlow", "Chrome", "120.0.0"],
         markOnlineOnConnect: false,
         syncFullHistory: false,
+        connectTimeoutMs: 60_000,
+        defaultQueryTimeoutMs: 60_000,
+        keepAliveIntervalMs: 30_000,
+        generateHighQualityLinkPreview: false,
       });
 
       this.sock.ev.on("creds.update", saveCreds);
@@ -147,6 +154,16 @@ class WhatsAppService {
             });
 
             if (reply && this.sock) {
+              // Anti-ban: simular comportamiento humano
+              const readDelay = 500 + Math.random() * 700;
+              await new Promise(r => setTimeout(r, readDelay));
+              await this.sock.readMessages([msg.key]);
+
+              await this.sock.sendPresenceUpdate("composing", from);
+              const typingDelay = 800 + Math.random() * 1500;
+              await new Promise(r => setTimeout(r, typingDelay));
+              await this.sock.sendPresenceUpdate("paused", from);
+
               await this.sock.sendMessage(from, { text: reply });
             }
           } catch (err) {

@@ -1,4 +1,4 @@
-export type AIProvider = "ollama" | "openai" | "groq" | "openrouter" | "anthropic" | "gemini";
+export type AIProvider = "ollama" | "openai" | "groq" | "openrouter" | "anthropic" | "gemini" | "github";
 
 export type ProviderMeta = {
   id: AIProvider;
@@ -103,6 +103,22 @@ export const PROVIDERS: Record<AIProvider, ProviderMeta> = {
       { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (free tier)", tier: "free" },
       { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (free tier)", tier: "free" },
       { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (paid)", tier: "paid" },
+    ],
+  },
+  github: {
+    id: "github",
+    name: "GitHub Models",
+    tier: "free",
+    description: "GPT-4o-mini, Llama, Phi y más vía GitHub Models. Gratis con tu Personal Access Token.",
+    requiresKey: true,
+    defaultBaseUrl: "https://models.inference.ai.azure.com",
+    defaultModel: "gpt-4o-mini",
+    models: [
+      { id: "gpt-4o-mini", name: "GPT-4o Mini (recomendado, rápido)", tier: "free" },
+      { id: "gpt-4o", name: "GPT-4o (más potente)", tier: "free" },
+      { id: "Phi-3.5-mini-instruct", name: "Phi 3.5 Mini", tier: "free" },
+      { id: "Meta-Llama-3.1-8B-Instruct", name: "Llama 3.1 8B", tier: "free" },
+      { id: "Meta-Llama-3.1-70B-Instruct", name: "Llama 3.1 70B", tier: "free" },
     ],
   },
 };

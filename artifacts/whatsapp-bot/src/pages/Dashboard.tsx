@@ -172,9 +172,13 @@ export default function Dashboard() {
               <div className="text-center space-y-6 w-full">
                 <div className="bg-white p-4 rounded-2xl mx-auto inline-block shadow-xl">
                   {qrData?.qr ? (
-                    <QRCodeSVG value={qrData.qr} size={180} fgColor="#0B141A" bgColor="#FFFFFF" />
+                    qrData.qr.startsWith('data:image') ? (
+                      <img src={qrData.qr} alt="WhatsApp QR" width={220} height={220} />
+                    ) : (
+                      <QRCodeSVG value={qrData.qr} size={220} fgColor="#0B141A" bgColor="#FFFFFF" />
+                    )
                   ) : (
-                    <div className="w-[180px] h-[180px] flex items-center justify-center bg-gray-100 rounded-lg">
+                    <div className="w-[220px] h-[220px] flex items-center justify-center bg-gray-100 rounded-lg">
                       <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
                     </div>
                   )}
