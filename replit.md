@@ -1,105 +1,108 @@
-# Workspace - Bot de Ventas WhatsApp + OpenClaw
+# VentaFlow — Sistema de Ventas Automatizado
 
 ## Overview
 
-Sistema completo de bot de ventas para WhatsApp con IA, basado en el ecosistema OpenClaw, conectado a Ollama hosteado en EasyPanel para procesamiento de lenguaje natural. Panel de control web completo para gestionar el bot, conversaciones, contactos, catálogo de productos y automatizaciones.
+Sistema completo de ventas automatizadas para WhatsApp con IA. Bot conectado vía Baileys (multi-device), panel de control web, agente multi-stage para sales/CRM, soporte de 6 proveedores de IA intercambiables y catálogo real de 81 cursos digitales.
+
+## Architecture
+
+Monorepo pnpm con 3 artefactos:
+- `artifacts/api-server` — Backend Express + Drizzle + Baileys
+- `artifacts/whatsapp-bot` — Dashboard React (Vite + Radix + Tailwind)
+- `artifacts/mockup-sandbox` — Preview interno de componentes
+
+Librerías compartidas en `lib/`:
+- `lib/db` — Schema Drizzle (PostgreSQL)
+- `lib/api-spec` — OpenAPI spec
+- `lib/api-zod` — Tipos generados
+- `lib/api-client-react` — Cliente React Query generado
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
-- **Frontend**: React + Vite + Tailwind CSS
-- **IA**: Ollama en EasyPanel (https://n8n-ollama.ginee6.easypanel.host)
-- **WhatsApp**: OpenClaw con Baileys
+- **Backend**: Express 5 + Drizzle ORM + PostgreSQL
+- **WhatsApp**: `@whiskeysockets/baileys` (QR real, multi-device, sin Business API)
+- **Frontend**: React + Vite + TailwindCSS + Radix UI + Wouter + TanStack Query
+- **IA**: Ollama, Groq, OpenRouter, OpenAI, Anthropic, Gemini (cambiables desde UI)
 
-## Modelos Ollama Disponibles
+## Schema
 
-- `qwen2.5:0.5b` — Modelo más rápido, ideal para respuestas simples
-- `qwen2.5:1.5b` — **Recomendado** — buen balance velocidad/calidad
-- `llama3.2:1b` — Alternativa con Llama
+- `botConfig` — Configuración del bot (incluye `aiProvider`, `aiApiKey`, `aiModel`, `paymentMethods`, `language`)
+- `contacts` — Contactos / leads / clientes (con stages: lead, prospect, customer, vip)
+- `conversations` — Conversaciones (con `salesStage` para multi-agente)
+- `messages` — Historial de mensajes
+- `products` — Catálogo (cargado desde `scripts/data/products.json`)
+- `automationRules` — Reglas de automatización
+- `agentSessions` — Sesiones del agente IA
+- `skills` — Skills custom JS para el agente
+- `memories` — Memorias persistentes del agente
 
-## Structure
+## Endpoints clave
 
-```text
-artifacts-monorepo/
-├── artifacts/
-│   ├── api-server/         # Express API server (backend)
-│   └── whatsapp-bot/       # React + Vite frontend (panel de control)
-├── lib/
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/
-│   └── src/seed.ts         # Script para cargar datos de ejemplo
+- `GET/POST /api/bot/status|connect|disconnect|qr|config` — Bot WhatsApp (Baileys real)
+- `GET/PUT /api/ai/config` + `POST /api/ai/test` + `GET /api/ai/providers` — Multi-IA
+- `POST /api/products/import/json` — Importar catálogo JSON
+- `POST /api/agent/chat` — Chat con agente VentaFlow (con tools)
+- CRUD para conversations, contacts, products, automations, skills, memories
+
+## Multi-agent prompts
+
+El agente VentaFlow tiene 6 prompts especializados según etapa de venta:
+1. `welcome` — Saludo inicial
+2. `detection` — Detección de necesidad
+3. `presentation` — Presentación del producto
+4. `objection` — Manejo de objeciones
+5. `closure` — Cierre de venta
+6. `postsale` — Post-venta y seguimiento
+
+Cada prompt interpola `{business}`, `{payments}`, `{language}` desde la config.
+
+## Páginas del dashboard
+
+1. **Dashboard** — Métricas + estado del bot + QR
+2. **Conversations** — Lista + chat
+3. **Contacts** — CRM con stages
+4. **Products** — Catálogo + import JSON
+5. **Automations** — Reglas
+6. **Settings** — Config del bot, idioma, métodos de pago
+7. **VentaFlow Agent** — Chat con agente IA + sesiones
+8. **Skills** — Skills JS personalizados
+9. **Memory** — Memorias del agente
+10. **AI Providers** — Selector multi-IA
+
+## WhatsApp (Baileys)
+
+- Las credenciales se persisten en `artifacts/api-server/.baileys-auth/` (gitignored).
+- En producción, montar como volumen en `/app/data/baileys-auth`.
+- El QR se genera como Data URL PNG y se expone en `GET /api/bot/qr`.
+- `POST /api/bot/disconnect` borra las credenciales para forzar nuevo QR.
+
+## Deployment (EasyPanel)
+
+`docker-compose.yml` define:
+- `ventaflow-api` — Backend
+- `ventaflow-web` — Frontend (nginx) + proxy `/api` al backend
+- `ventaflow-db` — PostgreSQL 16
+
+`Dockerfile` multi-stage usando `node:20-bookworm-slim` + pnpm.
+
+Volúmenes persistentes: `ventaflow_data` (Baileys auth) y `ventaflow_pg` (DB).
+
+## Catálogo
+
+81 productos en 13 categorías. Imágenes en `artifacts/whatsapp-bot/public/products/*.png` (11 únicas, generadas con AI).
+
+## Comandos útiles
+
+```bash
+pnpm --filter @workspace/db run push          # migrar schema
+pnpm --filter @workspace/scripts run seed     # poblar DB con catálogo real
+pnpm --filter @workspace/api-server run dev   # API en desarrollo
+pnpm --filter @workspace/whatsapp-bot run dev # Dashboard en desarrollo
 ```
 
-## Database Schema
+## Configuración inicial
 
-- `bot_config` — Configuración del bot (negocio, sistema, Ollama, horarios, `paymentMethods`, `language`)
-- `contacts` — Contactos/clientes con etapas de venta (lead/prospect/customer/vip)
-- `conversations` — Conversaciones de WhatsApp activas + `salesStage` (welcome/detection/presentation/objection/closure/postsale)
-- `messages` — Mensajes individuales (inbound/outbound, aiGenerated flag)
-- `products` — Catálogo de productos con precio y stock
-- `automation_rules` — Reglas de automatización (keyword, first_message, etc.)
-- `memories` — Memorias del agente OpenClaw
-- `skills` — Skills/habilidades personalizadas en JS sandboxeado
-- `agent_sessions` — Sesiones de conversación con el agente (historial en JSON)
-
-## API Endpoints Principales
-
-- `GET /api/bot/status` — Estado del bot
-- `PUT /api/bot/config` — Configurar el bot (incluye paymentMethods, language)
-- `GET /api/bot/qr` — QR para conectar WhatsApp
-- `POST /api/bot/connect` — Iniciar conexión
-- `GET /api/conversations` — Lista de conversaciones
-- `GET /api/conversations/:id/messages` — Mensajes
-- `POST /api/conversations/:id/send` — Enviar mensaje
-- `GET /api/contacts` — Clientes
-- `GET /api/products` — Catálogo
-- `POST /api/products/import/json` — Importar catálogo masivo desde JSON array
-- `GET /api/automation/rules` — Reglas de automatización
-- `GET /api/ollama/models` — Modelos disponibles en Ollama
-- `POST /api/ollama/test` — Probar la IA con un mensaje
-- `GET /api/messages/stats` — Estadísticas
-- `POST /api/agent/chat` — Chat con agente OpenClaw (con tools y multi-agente)
-- `GET /api/agent/sessions` — Listar sesiones del agente
-- `GET /api/skills` / `POST /api/skills` — Gestión de skills
-- `GET /api/memory` / `POST /api/memory` — Gestión de memorias
-
-## Sistema Multi-Agente
-
-El agente OpenClaw tiene 6 prompts especializados según la etapa de venta:
-- `welcome` — Bienvenida, detección del nombre e interés
-- `detection` — Búsqueda de productos, detección de necesidades
-- `presentation` — Presentación del producto ideal + métodos de pago
-- `objection` — Manejo de objeciones con empatía
-- `closure` — Cierre de venta, confirmación de pedido
-- `postsale` — Postventa, fidelización
-
-Optimizaciones de tokens: historial limitado a las últimas 10 mensajes, tools enviados solo en primera iteración, max 5 iteraciones por llamada.
-
-## Páginas del Panel
-
-1. **Dashboard** — Estadísticas, gráfico de tráfico, estado del bot
-2. **Conversaciones** — Lista de chats con mensajes y respuesta manual
-3. **Contactos** — CRM básico con etapas de venta
-4. **Productos** — Catálogo CRUD + importación masiva desde JSON
-5. **Automatizaciones** — Reglas de trigger/acción
-6. **Configuración** — Bot config + Ollama config + test de IA + métodos de pago + idioma
-7. **OpenClaw Agent** — Chat con agente IA con tools y sesiones
-8. **Skills** — Gestión de habilidades personalizadas en JS
-9. **Memory** — Memorias persistentes del agente
-
-## Scripts Útiles
-
-- `pnpm --filter @workspace/scripts run seed` — Cargar datos de ejemplo
-- `pnpm --filter @workspace/api-spec run codegen` — Regenerar clientes API
-- `pnpm --filter @workspace/db run push` — Aplicar cambios de schema
+1. Migrar DB: `pnpm --filter @workspace/db run push`
+2. Cargar catálogo: `pnpm --filter @workspace/scripts run seed`
+3. Abrir dashboard → AI Providers → activar proveedor
+4. Dashboard → "Connect WhatsApp" → escanear QR

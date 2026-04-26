@@ -43,8 +43,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Bot className="text-primary-foreground w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-xl text-foreground leading-tight">OpenClaw</h1>
-            <p className="text-xs text-muted-foreground font-medium">Sales Assistant</p>
+            <h1 className="font-display font-bold text-xl text-foreground leading-tight">VentaFlow</h1>
+            <p className="text-xs text-muted-foreground font-medium">Sistema de Ventas Automatizado</p>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           })}
           
           <div className="pt-4">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground/50 tracking-widest px-4 mb-2">OpenClaw Agent</p>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground/50 tracking-widest px-4 mb-2">VentaFlow Agent</p>
             {agentNavItems.map((item) => {
               const isActive = location === item.href;
               return (

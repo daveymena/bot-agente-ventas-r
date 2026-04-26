@@ -124,7 +124,7 @@ export default function Agent() {
         <div className="p-4 border-b border-border/50">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display font-bold text-lg flex items-center gap-2">
-              <BrainCircuit className="w-5 h-5 text-primary" /> OpenClaw Agent
+              <BrainCircuit className="w-5 h-5 text-primary" /> VentaFlow Agent
             </h2>
           </div>
           <Button onClick={newSession} className="w-full gap-2 shadow-lg shadow-primary/20" size="sm">
@@ -181,7 +181,7 @@ export default function Agent() {
               <div className="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 shadow-2xl shadow-primary/20">
                 <BrainCircuit className="w-12 h-12 text-primary" />
               </div>
-              <h2 className="text-2xl font-display font-bold text-foreground">OpenClaw Agent</h2>
+              <h2 className="text-2xl font-display font-bold text-foreground">VentaFlow Agent</h2>
               <p className="mt-2 text-sm max-w-md">Ask me anything. I can search the web, query your database, call APIs, save memories, and run custom skills.</p>
               <div className="mt-6 grid grid-cols-2 gap-3 max-w-lg w-full">
                 {[

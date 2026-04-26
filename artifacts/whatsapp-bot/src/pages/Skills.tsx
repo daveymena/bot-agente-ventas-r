@@ -231,7 +231,7 @@ function SkillDialog({ skill, onSave }: { skill?: Skill; onSave: () => void }) {
 // Use 'fetch' for HTTP requests
 // Return any value — it will be shown to the agent
 
-const result = "Hello from " + (params.name || "OpenClaw");
+const result = "Hello from " + (params.name || "VentaFlow");
 return result;`,
   });
 

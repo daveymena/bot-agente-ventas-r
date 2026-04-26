@@ -1,19 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { botConfigTable } from "@workspace/db/schema";
+import { botConfigTable, contactsTable, conversationsTable, messagesTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
+import { whatsappService } from "../services/whatsapp.js";
+import { callAI, PROVIDERS, type AIProvider } from "../services/ai-provider.js";
 
 const router: IRouter = Router();
-
-let botState = {
-  connected: false,
-  phone: null as string | null,
-  name: null as string | null,
-  status: "disconnected" as "disconnected" | "connecting" | "connected" | "qr_pending",
-  startTime: null as number | null,
-  messagesHandled: 0,
-  qrCode: null as string | null,
-};
 
 async function ensureConfig() {
   const existing = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
@@ -24,15 +16,117 @@ async function ensureConfig() {
   return configs[0];
 }
 
+// Wire up incoming WhatsApp messages -> AI -> reply + persist conversation
+whatsappService.setMessageHandler(async ({ from, text, pushName }) => {
+  try {
+    const config = await ensureConfig();
+
+    // Upsert contact
+    const existingContact = await db.select().from(contactsTable).where(eq(contactsTable.phone, from)).limit(1);
+    if (existingContact.length === 0) {
+      await db.insert(contactsTable).values({
+        phone: from,
+        name: pushName ?? from,
+        stage: "lead",
+      }).onConflictDoNothing();
+    }
+
+    // Get or create conversation
+    const existingConv = await db.select().from(conversationsTable).where(eq(conversationsTable.contactPhone, from)).limit(1);
+    let conversationId: string;
+    if (existingConv.length === 0) {
+      conversationId = crypto.randomUUID();
+      await db.insert(conversationsTable).values({
+        id: conversationId,
+        contactPhone: from,
+        contactName: pushName ?? from,
+        lastMessage: text,
+        lastMessageAt: new Date(),
+        status: "active",
+        unreadCount: 1,
+        aiHandled: !!config.autoReply,
+        totalMessages: 1,
+      });
+    } else {
+      conversationId = existingConv[0].id;
+      await db.update(conversationsTable)
+        .set({
+          lastMessage: text,
+          lastMessageAt: new Date(),
+          unreadCount: (existingConv[0].unreadCount ?? 0) + 1,
+          totalMessages: (existingConv[0].totalMessages ?? 0) + 1,
+        })
+        .where(eq(conversationsTable.id, conversationId));
+    }
+
+    // Persist inbound
+    await db.insert(messagesTable).values({
+      conversationId,
+      content: text,
+      direction: "inbound",
+      aiGenerated: false,
+      status: "delivered",
+      timestamp: new Date(),
+    });
+
+    if (!config.autoReply) return null;
+
+    // Working hours check
+    if (config.workingHoursStart && config.workingHoursEnd) {
+      const now = new Date();
+      const hh = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
+      if (hh < config.workingHoursStart || hh > config.workingHoursEnd) {
+        return config.offHoursMessage ?? null;
+      }
+    }
+
+    // Generate AI reply using configured provider
+    const provider = ((config as any).aiProvider ?? "ollama") as AIProvider;
+    const meta = PROVIDERS[provider];
+    const aiResp = await callAI(
+      [
+        { role: "system", content: config.systemPrompt ?? "Eres un asistente de ventas profesional." },
+        { role: "user", content: text },
+      ],
+      {
+        provider,
+        apiKey: (config as any).aiApiKey ?? undefined,
+        baseUrl: provider === "ollama" ? (config.ollamaUrl ?? meta.defaultBaseUrl) : meta.defaultBaseUrl,
+        model: (config as any).aiModel ?? (provider === "ollama" ? config.ollamaModel : meta.defaultModel),
+        temperature: 0.7,
+        maxTokens: 512,
+      }
+    );
+    const reply = aiResp.content?.trim() || null;
+
+    if (reply) {
+      await db.insert(messagesTable).values({
+        conversationId,
+        content: reply,
+        direction: "outbound",
+        aiGenerated: true,
+        status: "sent",
+        timestamp: new Date(),
+      });
+    }
+    return reply;
+  } catch (err) {
+    console.error("[VentaFlow] Handler error:", err);
+    return null;
+  }
+});
+
 router.get("/status", async (_req, res) => {
-  const uptime = botState.startTime ? Date.now() - botState.startTime : null;
+  const s = whatsappService.state;
+  const uptime = s.startTime ? Date.now() - s.startTime : null;
   res.json({
-    connected: botState.connected,
-    phone: botState.phone,
-    name: botState.name,
-    status: botState.status,
+    connected: s.connected,
+    phone: s.phone,
+    name: s.name,
+    status: s.status,
     uptime,
-    messagesHandled: botState.messagesHandled,
+    messagesHandled: s.messagesHandled,
+    lastError: s.lastError,
   });
 });
 
@@ -64,7 +158,6 @@ function formatConfig(config: typeof botConfigTable.$inferSelect) {
 router.put("/config", async (req, res) => {
   const body = req.body;
   await ensureConfig();
-  
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.businessName !== undefined) updates.businessName = body.businessName;
   if (body.welcomeMessage !== undefined) updates.welcomeMessage = body.welcomeMessage;
@@ -80,54 +173,46 @@ router.put("/config", async (req, res) => {
   if (body.language !== undefined) (updates as any).language = body.language;
 
   await db.update(botConfigTable).set(updates).where(eq(botConfigTable.id, "default"));
-  
   const config = await ensureConfig();
   res.json(formatConfig(config));
 });
 
 router.get("/qr", (_req, res) => {
   res.json({
-    qr: botState.qrCode,
-    status: botState.status,
+    qr: whatsappService.state.qrCode,
+    status: whatsappService.state.status,
   });
 });
 
-router.post("/connect", (_req, res) => {
-  botState.status = "connecting";
-  botState.qrCode = null;
-  
-  setTimeout(() => {
-    botState.status = "qr_pending";
-    botState.qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=openclaw-whatsapp-bot-demo-scan-me";
-  }, 2000);
-
-  res.json({
-    connected: botState.connected,
-    phone: botState.phone,
-    name: botState.name,
-    status: botState.status,
-    uptime: null,
-    messagesHandled: botState.messagesHandled,
-  });
+router.post("/connect", async (_req, res) => {
+  try {
+    // Fire and forget - QR will appear via /qr polling
+    whatsappService.connect().catch((e) => console.error("[bot] connect error:", e));
+    const s = whatsappService.state;
+    res.json({
+      connected: s.connected,
+      phone: s.phone,
+      name: s.name,
+      status: s.status,
+      uptime: s.startTime ? Date.now() - s.startTime : null,
+      messagesHandled: s.messagesHandled,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message ?? "connect failed" });
+  }
 });
 
-router.post("/disconnect", (_req, res) => {
-  botState.connected = false;
-  botState.phone = null;
-  botState.name = null;
-  botState.status = "disconnected";
-  botState.startTime = null;
-  botState.qrCode = null;
-
+router.post("/disconnect", async (_req, res) => {
+  await whatsappService.disconnect();
+  const s = whatsappService.state;
   res.json({
     connected: false,
     phone: null,
     name: null,
     status: "disconnected",
     uptime: null,
-    messagesHandled: botState.messagesHandled,
+    messagesHandled: s.messagesHandled,
   });
 });
 
-export { botState };
 export default router;

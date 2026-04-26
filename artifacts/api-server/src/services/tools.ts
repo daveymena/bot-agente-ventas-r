@@ -88,7 +88,7 @@ const builtinTools: Record<string, Tool> = {
       try {
         const res = await fetch(url as string, {
           signal: AbortSignal.timeout(10000),
-          headers: { "User-Agent": "OpenClaw/1.0 Bot" },
+          headers: { "User-Agent": "VentaFlow/1.0 Bot" },
         });
         const text = await res.text();
         const stripped = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();

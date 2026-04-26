@@ -1,0 +1,67 @@
+uploads = []
+
+[[generated]]
+id = "hQX7kMvr9Q400weG4u9g0"
+uri = "file://artifacts/whatsapp-bot/public/products/piano_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "D3yDOOawpR0ooa62hVoBO"
+uri = "file://artifacts/whatsapp-bot/public/products/guitarra_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "FRBlDpQ2r7Ch-_Ob62CS_"
+uri = "file://artifacts/whatsapp-bot/public/products/diseno_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "eeRopdYNbtSFl5OYGjKSS"
+uri = "file://artifacts/whatsapp-bot/public/products/excel_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "gtAQnLsaKoWTBDxxuCHFo"
+uri = "file://artifacts/whatsapp-bot/public/products/hacking_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "mJtP4BSJzITujR1ZUyUOF"
+uri = "file://artifacts/whatsapp-bot/public/products/idiomas_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "GXjGbTr2co01y6A2WgTE6"
+uri = "file://artifacts/whatsapp-bot/public/products/marketing_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "DV0liVO39nweZYocCGJYR"
+uri = "file://artifacts/whatsapp-bot/public/products/melamina_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "p5xPcmfegrr5METnvRQGk"
+uri = "file://artifacts/whatsapp-bot/public/products/programacion_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "lCVEXtugER6y9SSOj_n8d"
+uri = "file://artifacts/whatsapp-bot/public/products/resina_megapack.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "Nk8Gx_pNq5dSKx9kC8ywv"
+uri = "file://attached_assets/stock_images/trading_thumbnail.jpg"
+type = "image"
+title = "stock trading chart candlesticks bull market financial dashboard green"

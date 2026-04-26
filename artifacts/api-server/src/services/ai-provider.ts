@@ -175,8 +175,8 @@ async function callOpenAICompatible(messages: AIMessage[], cfg: AICallConfig, to
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (cfg.apiKey) headers["Authorization"] = `Bearer ${cfg.apiKey}`;
   if (cfg.provider === "openrouter") {
-    headers["HTTP-Referer"] = "https://openclaw.bot";
-    headers["X-Title"] = "OpenClaw Sales Bot";
+    headers["HTTP-Referer"] = "https://ventaflow.app";
+    headers["X-Title"] = "VentaFlow Sales Bot";
   }
 
   const body: Record<string, unknown> = {

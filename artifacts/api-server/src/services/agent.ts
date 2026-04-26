@@ -57,7 +57,7 @@ function buildStagePrompt(stage: SalesStage, cfg: Awaited<ReturnType<typeof getC
 
 function buildAgentSystemPrompt(cfg: Awaited<ReturnType<typeof getConfig>>): string {
   const now = new Date().toLocaleString("es-MX", { timeZone: "America/Mexico_City", dateStyle: "full", timeStyle: "short" });
-  return `Eres OpenClaw, un asistente AI avanzado capaz de ejecutar tareas usando herramientas.
+  return `Eres VentaFlow, un agente comercial AI capaz de ejecutar tareas usando herramientas.
 
 Fecha y hora actual: ${now}
 Negocio: ${cfg.businessName}
