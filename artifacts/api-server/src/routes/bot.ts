@@ -16,6 +16,12 @@ async function ensureConfig() {
   return configs[0];
 }
 
+// Auto-conectar WhatsApp al arrancar (intenta restaurar sesión guardada o genera QR)
+setTimeout(() => {
+  console.log("[VentaFlow] Auto-iniciando WhatsApp...");
+  whatsappService.connect().catch((e) => console.error("[VentaFlow] Auto-connect error:", e));
+}, 2000);
+
 // Wire up incoming WhatsApp messages -> AI -> reply + persist conversation
 whatsappService.setMessageHandler(async ({ from, text, pushName }) => {
   try {

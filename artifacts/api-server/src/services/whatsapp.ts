@@ -53,8 +53,14 @@ class WhatsAppService {
   }
 
   async connect(): Promise<void> {
-    if (this.state.status === "connecting" || this.state.status === "qr_pending") {
+    // Solo bloquear si ya hay un socket vivo
+    if (this.sock && (this.state.status === "qr_pending" || this.state.status === "connected")) {
       return;
+    }
+    // Cerrar socket previo si existe (importante para reconexión post-pairing)
+    if (this.sock) {
+      try { this.sock.end(undefined); } catch {}
+      this.sock = null;
     }
     this.state.status = "connecting";
     this.state.qrCode = null;
@@ -116,7 +122,10 @@ class WhatsAppService {
 
           if (shouldReconnect) {
             this.state.status = "connecting";
-            setTimeout(() => this.connect().catch(console.error), 3000);
+            // Cerrar y limpiar socket actual para que connect() pueda crear uno nuevo
+            this.sock = null;
+            const delay = statusCode === 515 ? 1500 : 3000;
+            setTimeout(() => this.connect().catch(console.error), delay);
           } else {
             this.state.status = "disconnected";
             this.state.startTime = null;
