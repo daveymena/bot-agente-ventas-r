@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CheckCircle2, XCircle, Zap, Lock, Unlock, Play, Save } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Zap, Lock, Unlock, Play, Save, Github, Copy, ExternalLink } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -32,6 +32,7 @@ const PROVIDER_ICONS: Record<string, string> = {
   openai: "🤖",
   anthropic: "🧠",
   gemini: "✨",
+  github: "🐙",
 };
 
 export default function AIProviders() {
@@ -45,6 +46,19 @@ export default function AIProviders() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; latencyMs: number; response?: string; error?: string } | null>(null);
   const [saved, setSaved] = useState(false);
+
+  // GitHub Device Flow state
+  const [ghFlow, setGhFlow] = useState<{
+    user_code: string;
+    verification_uri: string;
+    verification_uri_complete: string;
+    device_code: string;
+    interval: number;
+    expires_in: number;
+  } | null>(null);
+  const [ghStatus, setGhStatus] = useState<"idle" | "starting" | "pending" | "authorized" | "expired" | "error">("idle");
+  const [ghError, setGhError] = useState<string | null>(null);
+  const [ghCopied, setGhCopied] = useState(false);
 
   useEffect(() => {
     fetch(`${BASE}/api/ai/providers`)
@@ -92,6 +106,72 @@ export default function AIProviders() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const startGithubFlow = async () => {
+    setGhStatus("starting");
+    setGhError(null);
+    setGhFlow(null);
+    try {
+      const res = await fetch(`${BASE}/api/ai/github/device-start`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.device_code) {
+        setGhStatus("error");
+        setGhError(data.error || "No se pudo iniciar el flujo");
+        return;
+      }
+      setGhFlow(data);
+      setGhStatus("pending");
+      // Abrir GitHub en nueva pestaña con el código pre-llenado
+      window.open(data.verification_uri_complete, "_blank", "noopener,noreferrer");
+      // Iniciar polling
+      pollGithub(data.device_code, data.interval, Date.now() + data.expires_in * 1000);
+    } catch (e: any) {
+      setGhStatus("error");
+      setGhError(e?.message || "Error de red");
+    }
+  };
+
+  const pollGithub = async (device_code: string, interval: number, expiresAt: number) => {
+    if (Date.now() > expiresAt) {
+      setGhStatus("expired");
+      return;
+    }
+    try {
+      const res = await fetch(`${BASE}/api/ai/github/device-poll`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ device_code }),
+      });
+      const data = await res.json();
+      if (data.ok && data.status === "authorized") {
+        setGhStatus("authorized");
+        setGhFlow(null);
+        // Recargar config
+        const cfgRes = await fetch(`${BASE}/api/ai/config`).then(r => r.json());
+        setActiveConfig(cfgRes);
+        setSelectedProvider(cfgRes.provider);
+        setModel(cfgRes.model);
+        setApiKey(cfgRes.hasKey ? "***" : "");
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+        return;
+      }
+      // slow_down → aumentar intervalo, authorization_pending → seguir
+      const nextInterval = data.status === "slow_down" ? (data.interval ?? interval + 5) : interval;
+      setTimeout(() => pollGithub(device_code, nextInterval, expiresAt), nextInterval * 1000);
+    } catch {
+      setTimeout(() => pollGithub(device_code, interval, expiresAt), interval * 1000);
+    }
+  };
+
+  const copyGhCode = async () => {
+    if (!ghFlow) return;
+    try {
+      await navigator.clipboard.writeText(ghFlow.user_code);
+      setGhCopied(true);
+      setTimeout(() => setGhCopied(false), 2000);
+    } catch {}
   };
 
   const handleTest = async () => {
@@ -186,7 +266,61 @@ export default function AIProviders() {
               </div>
             )}
 
-            {currentProvider.requiresKey && (
+            {currentProvider.id === "github" ? (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Github className="w-3.5 h-3.5" /> Autenticación con GitHub
+                </label>
+
+                {ghStatus === "authorized" || (activeConfig?.provider === "github" && activeConfig?.hasKey && !ghFlow) ? (
+                  <div className="p-4 rounded-xl border bg-emerald-500/10 border-emerald-500/20 flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-emerald-400">Conectado a GitHub</p>
+                      <p className="text-xs text-muted-foreground">Token guardado. GitHub Models está listo para usarse.</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={startGithubFlow} className="text-xs">
+                      Reconectar
+                    </Button>
+                  </div>
+                ) : ghFlow && ghStatus === "pending" ? (
+                  <div className="p-5 rounded-xl border bg-secondary/20 border-border/50 space-y-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Tu código de autorización:</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-2xl font-mono font-bold tracking-[0.3em] text-primary bg-background border border-border/50 rounded-lg py-3 px-4 text-center">
+                          {ghFlow.user_code}
+                        </code>
+                        <Button type="button" variant="secondary" size="icon" onClick={copyGhCode} className="border border-border/50">
+                          {ghCopied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>1. Se abrió <a href={ghFlow.verification_uri_complete} target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">github.com/login/device <ExternalLink className="w-3 h-3" /></a></p>
+                      <p>2. Pega el código de arriba (o ya viene pre-llenado).</p>
+                      <p>3. Autoriza la app. Esta página detectará automáticamente cuando lo hagas.</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="text-xs text-muted-foreground">Esperando autorización...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      Inicia sesión con tu cuenta de GitHub. Se generará un token automáticamente, sin necesidad de crear un PAT manualmente. Igual que VS Code.
+                    </p>
+                    <Button type="button" onClick={startGithubFlow} disabled={ghStatus === "starting"} className="gap-2 bg-[#24292e] hover:bg-[#1b1f23] text-white border border-border/50">
+                      {ghStatus === "starting" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Github className="w-4 h-4" />}
+                      {ghStatus === "starting" ? "Iniciando..." : "Iniciar sesión con GitHub"}
+                    </Button>
+                    {ghStatus === "expired" && <p className="text-xs text-amber-400">El código expiró. Genera uno nuevo.</p>}
+                    {ghStatus === "error" && ghError && <p className="text-xs text-destructive">{ghError}</p>}
+                  </>
+                )}
+              </div>
+            ) : currentProvider.requiresKey && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5" /> API Key

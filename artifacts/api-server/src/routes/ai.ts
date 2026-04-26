@@ -58,6 +58,70 @@ router.put("/config", async (req, res) => {
   });
 });
 
+// ===== GitHub OAuth Device Flow =====
+// Usamos el client_id público de GitHub CLI (mismo flow que `gh auth login` y VS Code).
+// El usuario autoriza en github.com/login/device, sin necesidad de PAT manual.
+const GITHUB_DEVICE_CLIENT_ID = "178c6fc778ccc68e1d6a";
+
+router.post("/github/device-start", async (_req, res) => {
+  try {
+    const r = await fetch("https://github.com/login/device/code", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: GITHUB_DEVICE_CLIENT_ID, scope: "read:user" }),
+    });
+    const data = await r.json() as any;
+    if (!data.device_code) {
+      return res.status(500).json({ error: data.error_description || data.error || "device-start failed" });
+    }
+    res.json({
+      device_code: data.device_code,
+      user_code: data.user_code,
+      verification_uri: data.verification_uri,
+      verification_uri_complete: data.verification_uri_complete || `${data.verification_uri}?user_code=${data.user_code}`,
+      expires_in: data.expires_in,
+      interval: data.interval ?? 5,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "network error" });
+  }
+});
+
+router.post("/github/device-poll", async (req, res) => {
+  const { device_code } = req.body;
+  if (!device_code) return res.status(400).json({ error: "device_code required" });
+  try {
+    const r = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: GITHUB_DEVICE_CLIENT_ID,
+        device_code,
+        grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+      }),
+    });
+    const data = await r.json() as any;
+    if (data.access_token) {
+      // Guardar token en DB y activar provider github
+      const existing = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
+      if (existing.length === 0) {
+        await db.insert(botConfigTable).values({ id: "default" });
+      }
+      await db.update(botConfigTable).set({
+        aiProvider: "github",
+        aiApiKey: data.access_token,
+        aiModel: "gpt-4o-mini",
+        updatedAt: new Date(),
+      } as any).where(eq(botConfigTable.id, "default"));
+      return res.json({ ok: true, status: "authorized", provider: "github", model: "gpt-4o-mini" });
+    }
+    // pending / slow_down / expired_token / access_denied
+    res.json({ ok: false, status: data.error || "pending", interval: data.interval });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "network error" });
+  }
+});
+
 router.post("/test", async (req, res) => {
   const { provider, apiKey, model, ollamaUrl } = req.body;
 
