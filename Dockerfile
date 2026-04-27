@@ -35,4 +35,4 @@ VOLUME ["/app/data"]
 WORKDIR /app/artifacts/api-server
 ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "--loader", "tsx/esm", "src/index.ts"]
+CMD ["node", "--import", "tsx/esm", "src/index.ts"]
