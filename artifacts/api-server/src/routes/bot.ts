@@ -43,8 +43,9 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       return matches.length >= Math.ceil(productWords.length / 2);
     });
 
-    // 3. CONSULTA AL CEREBRO HERMES (Microservicio)
+    // 3. CONSULTA AL CEREBRO HERMES (Microservicio con contexto completo)
     let finalReply = "";
+    let hermesMatchedProduct = null;
     const hermesUrl = process.env.HERMES_URL || "http://hermes:5000";
     
     try {
@@ -55,24 +56,26 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
         body: JSON.stringify({
           message: text,
           phone: from,
-          history: history.map(m => ({ role: m.direction === "inbound" ? "user" : "assistant", content: m.content }))
+          history: history.map(m => ({ role: m.direction === "inbound" ? "user" : "assistant", content: m.content })),
+          products: products.map(p => ({ id: p.id, name: p.name, price: p.price }))
         })
       });
       const hermesData: any = await hermesRes.json();
       finalReply = hermesData.response;
       
-      // Si Hermes decide usar herramientas (ej: buscar producto)
-      if (hermesData.tool_calls && matchedProduct) {
-        console.log(`[Daniel] 🛠️ Hermes activó herramientas para: ${matchedProduct.name}`);
-        // Aquí se dispara la lógica de la Card Maestro que ya tenemos perfeccionada
+      // Hermes devuelve el nombre exacto del producto que identificó por contexto
+      if (hermesData.matched_product_name) {
+        const hermesName = hermesData.matched_product_name.toLowerCase();
+        hermesMatchedProduct = products.find(p => p.name.toLowerCase() === hermesName)
+          || products.find(p => p.name.toLowerCase().includes(hermesName) || hermesName.includes(p.name.toLowerCase()));
+        if (hermesMatchedProduct) console.log(`[Daniel] 🎯 Hermes identificó: ${hermesMatchedProduct.name}`);
       }
     } catch (e) {
       console.error("[Daniel] Fallo conexión Hermes, usando IA de respaldo.");
       const provider = ((config as any).aiProvider ?? "github") as AIProvider;
       
-      // Inyectar catálogo completo al cerebro del bot
       const productsList = products.map(p => `- ${p.name}`).join("\n");
-      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE]:\n${productsList}\n\nREGLAS ESTRICTAS PARA RESPONDER:\n1. Si el cliente pregunta por un producto, responde SOLO con 1 o 2 líneas MUY BREVES (ej. "¡Claro! El producto es excelente, aquí te dejo la información:").\n2. NUNCA escribas el precio o los detalles del producto en tu respuesta, el sistema enviará la tarjeta automáticamente debajo de tu mensaje.\n3. NUNCA uses símbolos como ┌─── o cajas de texto.\n4. Si el historial de conversación indica que ya se saludaron, NO vuelvas a decir Hola.`;
+      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE]:\n${productsList}\n\nREGLAS ESTRICTAS:\n1. Responde SOLO 1-2 líneas breves si preguntan por un producto.\n2. NUNCA escribas precios ni detalles, el sistema envía la tarjeta automáticamente.\n3. NUNCA uses cajas ASCII como ┌───.\n4. No saludes si ya hay historial.`;
 
       const aiResp = await callAI(
         [{ role: "system", content: systemPromptWithProducts }, ...history.map(m => ({ role: m.direction === "inbound" ? "user" as const : "assistant" as const, content: m.content })), { role: "user", content: text }],
@@ -81,15 +84,18 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       finalReply = aiResp.content || "";
     }
 
-    if (matchedProduct) {
+    // Hermes tiene prioridad; fuzzy matching es el fallback
+    const effectiveProduct = hermesMatchedProduct || matchedProduct;
+
+    if (effectiveProduct) {
       // A. IMAGEN
-      const imageName = (matchedProduct as any).imageUrl?.split('/').pop() || (matchedProduct as any).image;
+      const imageName = (effectiveProduct as any).imageUrl?.split('/').pop() || (effectiveProduct as any).image;
       const localImagePath = `c:\\Users\\ADMIN\\Downloads\\Openclaw-Automation\\Openclaw-Automation\\artifacts\\whatsapp-bot\\public\\products\\${imageName}`;
       if (fs.existsSync(localImagePath)) await whatsappService.sendImage(from + "@s.whatsapp.net", localImagePath);
 
       // B. CARD COMERCIAL DINÁMICA CON ESTÉTICA PREMIUM
-      const price = matchedProduct.price.toLocaleString('es-CO');
-      const name = matchedProduct.name.toUpperCase();
+      const price = effectiveProduct.price.toLocaleString('es-CO');
+      const name = effectiveProduct.name.toUpperCase();
       
       let emoji = "📦";
       let isDigital = false;
@@ -97,7 +103,7 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       else if (name.includes("SOFTWARE") || name.includes("SISTEMA") || name.includes("BOT")) { emoji = "💻"; isDigital = true; }
       else if (name.includes("SERVICIO") || name.includes("ASESORIA")) emoji = "🤝";
       
-      const description = matchedProduct.description || "Excelente opción para expandir tus habilidades.";
+      const description = effectiveProduct.description || "Excelente opción para expandir tus habilidades.";
 
       let card = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       card += `${emoji} *${name}*\n`;
@@ -134,13 +140,13 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
 
       // C. CONFIRMACIÓN DE COMPRA (ADN COPIADO)
       if (lowerText.includes("pago") || lowerText.includes("pagar") || lowerText.includes("link") || lowerText.includes("comprar")) {
-        const mpLink = await paymentService.createMercadoPagoLink(matchedProduct.name, matchedProduct.price, from);
-        const paypalLink = await paymentService.createPayPalLink(matchedProduct.name, Math.ceil(matchedProduct.price / 4000), from);
+        const mpLink = await paymentService.createMercadoPagoLink(effectiveProduct.name, effectiveProduct.price, from);
+        const paypalLink = await paymentService.createPayPalLink(effectiveProduct.name, Math.ceil(effectiveProduct.price / 4000), from);
         
         let payMsg = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n`;
         payMsg += `🎉 ¡EXCELENTE ELECCIÓN! 🚀\n`;
         payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-        payMsg += `📦 *PRODUCTO:* ${matchedProduct.name}\n`;
+        payMsg += `📦 *PRODUCTO:* ${effectiveProduct.name}\n`;
         payMsg += `💰 *TOTAL A PAGAR:* $${price} COP\n\n`;
         payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
         payMsg += `💳 MÉTODOS DE PAGO\n`;
