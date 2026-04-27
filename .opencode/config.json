@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "github": {
+      "type": "openai",
+      "name": "GitHub Models",
+      "baseURL": "https://models.inference.ai.azure.com",
+      "models": [
+        "gpt-4o",
+        "gpt-4o-mini",
+        "Meta-Llama-3.1-70B-Instruct",
+        "Meta-Llama-3.1-8B-Instruct"
+      ],
+      "env": ["GITHUB_TOKEN"]
+    }
+  },
+  "autoshare": false,
+  "model": "github/gpt-4o"
+}
