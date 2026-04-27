@@ -28,8 +28,6 @@ COPY --from=builder /app/artifacts/whatsapp-bot/dist ./artifacts/whatsapp-bot/di
 COPY --from=builder /app/scripts ./scripts
 # Copiar config de OpenCode al contenedor
 COPY .opencode ./.opencode
-# Copiar git history + script de push para poder subir cambios desde la consola
-COPY .git ./.git
 COPY push.sh ./push.sh
 RUN chmod +x /app/push.sh
 
