@@ -19,13 +19,21 @@ const frontendPath = path.join(import.meta.dirname, "../../whatsapp-bot/dist/pub
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
   
-  // Soporte para React Router (Catch-all)
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
+  // Soporte para React Router (Catch-all sin usar '*' para evitar crash en Express 5)
+  app.use((req, res, next) => {
+    if (req.method === "GET") {
+      res.sendFile(path.join(frontendPath, "index.html"));
+    } else {
+      next();
+    }
   });
 } else {
-  app.get("/", (req, res) => {
-    res.send("<h1>El Frontend está compilando o no se encuentra...</h1>");
+  app.use((req, res, next) => {
+    if (req.method === "GET") {
+      res.send("<h1>El Frontend está compilando o no se encuentra...</h1>");
+    } else {
+      next();
+    }
   });
 }
 
