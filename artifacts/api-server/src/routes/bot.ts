@@ -66,14 +66,14 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       const provider = ((config as any).aiProvider ?? "github") as AIProvider;
       
       // Inyectar catálogo completo al cerebro del bot
-      const productsList = products.map(p => `- ${p.name} (Precio: $${p.price.toLocaleString('es-CO')})`).join("\n");
-      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE EN BASE DE DATOS]:\n${productsList}\n\nUsa esta información para vender, guiar al cliente y confirmar si tenemos lo que busca.`;
+      const productsList = products.map(p => `- ${p.name}`).join("\n");
+      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE]:\n${productsList}\n\nREGLAS ESTRICTAS PARA RESPONDER:\n1. Si el cliente pregunta por un producto, responde SOLO con 1 o 2 líneas MUY BREVES (ej. "¡Claro! El producto es excelente, aquí te dejo la información:").\n2. NUNCA escribas el precio o los detalles del producto en tu respuesta, el sistema enviará la tarjeta automáticamente debajo de tu mensaje.\n3. NUNCA uses símbolos como ┌─── o cajas de texto.\n4. Si el historial de conversación indica que ya se saludaron, NO vuelvas a decir Hola.`;
 
       const aiResp = await callAI(
         [{ role: "system", content: systemPromptWithProducts }, ...history.map(m => ({ role: m.direction === "inbound" ? "user" as const : "assistant" as const, content: m.content })), { role: "user", content: text }],
-        { provider, apiKey: (config as any).aiApiKey, model: (config as any).aiModel || "gpt-4o-mini", temperature: 0.7 }
+        { provider, apiKey: (config as any).aiApiKey, model: (config as any).aiModel || "gpt-4o-mini", temperature: 0.5 }
       );
-      finalReply = aiResp.content || "¡Hola! Dame un momento para revisar los detalles de lo que buscas. 😊";
+      finalReply = aiResp.content || "";
     }
 
     if (matchedProduct) {
@@ -82,27 +82,50 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       const localImagePath = `c:\\Users\\ADMIN\\Downloads\\Openclaw-Automation\\Openclaw-Automation\\artifacts\\whatsapp-bot\\public\\products\\${imageName}`;
       if (fs.existsSync(localImagePath)) await whatsappService.sendImage(from + "@s.whatsapp.net", localImagePath);
 
-      // B. CARD COMERCIAL DINÁMICA (SaaS Multi-producto)
+      // B. CARD COMERCIAL DINÁMICA CON ESTÉTICA PREMIUM
       const price = matchedProduct.price.toLocaleString('es-CO');
       const name = matchedProduct.name.toUpperCase();
       
-      // Asigna un emoji dinámico basado en la categoría o nombre
       let emoji = "📦";
-      if (name.includes("CURSO") || name.includes("CLASE") || name.includes("GUIA")) emoji = "🎓";
-      else if (name.includes("SOFTWARE") || name.includes("SISTEMA") || name.includes("BOT")) emoji = "💻";
+      let isDigital = false;
+      if (name.includes("CURSO") || name.includes("CLASE") || name.includes("MEGAPACK") || name.includes("GUIA")) { emoji = "🎓"; isDigital = true; }
+      else if (name.includes("SOFTWARE") || name.includes("SISTEMA") || name.includes("BOT")) { emoji = "💻"; isDigital = true; }
       else if (name.includes("SERVICIO") || name.includes("ASESORIA")) emoji = "🤝";
       
-      const description = matchedProduct.description || "Excelente producto garantizado para ti.";
+      const description = matchedProduct.description || "Excelente opción para expandir tus habilidades.";
 
       let card = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       card += `${emoji} *${name}*\n`;
       card += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-      card += `✨ ${description}\n\n`;
-      card += `💰 PRECIO: $${price} COP\n\n`;
+      
+      card += `🎯 *DESCRIPCIÓN*\n`;
+      card += `${description}\n\n`;
+
+      if (isDigital) {
+        card += `✨ *INCLUYE:*\n`;
+        card += `✅ Acceso de por vida\n`;
+        card += `✅ Actualizaciones constantes\n`;
+        card += `✅ Soporte de calidad\n\n`;
+        card += `📚 *CONTENIDO:*\n`;
+        card += `📖 Múltiples secciones y módulos\n`;
+        card += `🎬 Clases y material paso a paso\n`;
+        card += `⏱️ Avanza a tu propio ritmo\n\n`;
+      } else {
+        card += `✨ *CARACTERÍSTICAS:*\n`;
+        card += `✅ Producto 100% garantizado\n`;
+        card += `✅ Soporte y atención VIP\n\n`;
+        card += `📦 *ENTREGA:*\n`;
+        card += `🚚 Despacho seguro a tu dirección\n`;
+        card += `⏱️ Atención y gestión rápida\n\n`;
+      }
+
+      card += `💰 *PRECIO:* $${price} COP\n`;
+      card += `⚡ *ACCESO:* ${isDigital ? 'Inmediato (Google Drive)' : 'Inmediato'}\n\n`;
       card += `👉 ¿Te gustaría adquirirlo? 😊`;
 
-      // Se usa la IA (finalReply) como base amigable, y se adjunta la Tarjeta
-      finalReply = (finalReply.length > 5 ? finalReply + "\n\n" : "") + card;
+      // Limpiamos la respuesta de la IA para que no envíe basura antes de la tarjeta
+      finalReply = finalReply.replace(/┌[\s\S]*?┘/g, '').trim();
+      finalReply = (finalReply.length > 3 ? finalReply + "\n\n" : "") + card;
 
       // C. CONFIRMACIÓN DE COMPRA (ADN COPIADO)
       if (lowerText.includes("pago") || lowerText.includes("pagar") || lowerText.includes("link") || lowerText.includes("comprar")) {
