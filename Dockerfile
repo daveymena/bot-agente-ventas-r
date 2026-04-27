@@ -7,7 +7,7 @@ WORKDIR /app
 
 # ---- Build stage ----
 FROM base AS builder
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig*.json ./
 COPY artifacts ./artifacts
 COPY lib ./lib
 COPY scripts ./scripts
