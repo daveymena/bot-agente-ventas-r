@@ -31,11 +31,16 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
     const history = await db.select().from(messagesTable).where(eq(messagesTable.conversationId, conversationId)).orderBy(messagesTable.timestamp).limit(10);
     const lowerText = text.toLowerCase();
 
-    // 2. DETECCIÓN DE PRODUCTO (Súper Sensible)
+    // 2. DETECCIÓN DE PRODUCTO (Fuzzy matching por palabras clave)
     const products = await db.select().from(productsTable).limit(100);
     const matchedProduct = products.find(p => {
-      const name = p.name.toLowerCase();
-      return lowerText.includes(name) || (name.includes("piano") && lowerText.includes("piano")) || (name.includes("excel") && lowerText.includes("excel"));
+      const productWords = p.name.toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 3); // Ignorar palabras cortas como "de", "el", "la"
+      if (productWords.length === 0) return false;
+      const matches = productWords.filter(w => lowerText.includes(w));
+      // Coincide si al menos la mitad de las palabras clave están en el mensaje
+      return matches.length >= Math.ceil(productWords.length / 2);
     });
 
     // 3. CONSULTA AL CEREBRO HERMES (Microservicio)
