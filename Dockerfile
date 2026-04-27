@@ -26,6 +26,13 @@ COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/artifacts/api-server ./artifacts/api-server
 COPY --from=builder /app/artifacts/whatsapp-bot/dist ./artifacts/whatsapp-bot/dist
 COPY --from=builder /app/scripts ./scripts
+# Copiar config de OpenCode al contenedor
+COPY .opencode ./.opencode
+
+# Herramientas de desarrollo en consola (OpenCode AI + git)
+RUN apt-get update && apt-get install -y --no-install-recommends git curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g opencode-ai
 
 # Persistent dirs (mount as volumes in EasyPanel)
 RUN mkdir -p /app/data/baileys-auth /app/data/uploads
