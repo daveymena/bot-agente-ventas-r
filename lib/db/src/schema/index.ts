@@ -2,6 +2,7 @@ export * from "./botConfig";
 export * from "./contacts";
 export * from "./conversations";
 export * from "./messages";
+export * from "./categories";
 export * from "./products";
 export * from "./automationRules";
 export * from "./memories";

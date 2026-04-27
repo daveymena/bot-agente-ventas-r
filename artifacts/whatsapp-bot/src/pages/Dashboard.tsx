@@ -18,13 +18,13 @@ const chartData = [
 ];
 
 export default function Dashboard() {
-  const { data: stats } = useGetMessageStats({ query: { refetchInterval: 10000 } });
-  const { data: botStatus } = useGetBotStatus({ query: { refetchInterval: 3000 } });
+  const { data: stats } = useGetMessageStats({ query: { refetchInterval: 5000 } });
+  const { data: botStatus } = useGetBotStatus({ query: { refetchInterval: 1000 } });
   
   const { data: qrData } = useGetBotQR({ 
     query: { 
-      enabled: botStatus?.status === 'qr_pending',
-      refetchInterval: 3000 
+      enabled: botStatus?.status === 'qr_pending' || botStatus?.status === 'connecting',
+      refetchInterval: 1000 
     } 
   });
 
@@ -110,6 +110,13 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center pt-4 pb-6 min-h-[300px]">
             
+            {botStatus === undefined && (
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Contactando al servidor...</p>
+              </div>
+            )}
+
             {botStatus?.status === 'connected' && (
               <div className="text-center space-y-6 w-full">
                 <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center border-4 border-primary/30 shadow-[0_0_30px_rgba(37,211,102,0.3)]">
@@ -122,7 +129,7 @@ export default function Dashboard() {
                 <div className="p-4 bg-background/50 rounded-xl border border-border">
                   <p className="text-sm text-muted-foreground flex justify-between">
                     <span>Messages Handled:</span>
-                    <span className="font-bold text-foreground">{botStatus.messagesHandled}</span>
+                    <span className="font-bold text-foreground">{botStatus.messagesHandled || 0}</span>
                   </p>
                 </div>
                 <Button 
@@ -137,7 +144,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            {botStatus?.status === 'disconnected' && (
+            {(botStatus?.status === 'disconnected' || (botStatus && !botStatus.status)) && (
               <div className="text-center space-y-6 w-full">
                 <div className="w-20 h-20 mx-auto rounded-full bg-secondary flex items-center justify-center">
                   <Bot className="w-10 h-10 text-muted-foreground" />

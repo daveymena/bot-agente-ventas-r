@@ -33,11 +33,13 @@ export default function Conversations() {
     }
   });
 
-  const filteredConversations = convData?.conversations.filter(c => 
-    c.contactPhone.includes(searchTerm) || (c.contactName?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-  ) || [];
+  const conversations = convData?.conversations ?? (Array.isArray(convData) ? convData : []);
 
-  const activeConversation = convData?.conversations.find(c => c.id === activeId);
+  const filteredConversations = conversations.filter((c: any) => 
+    (c.contactPhone ?? "").includes(searchTerm) || (c.contactName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
+  );
+
+  const activeConversation = conversations.find((c: any) => c.id === activeId);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -149,13 +151,13 @@ export default function Conversations() {
               <div className="relative z-10 space-y-6">
                 {loadingMsgs ? (
                   <div className="flex justify-center p-8"><Clock className="w-6 h-6 animate-spin text-muted-foreground" /></div>
-                ) : messagesData?.messages.length === 0 ? (
+                ) : (messagesData?.messages ?? []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     <MessageSquare className="w-12 h-12 mb-4 opacity-20" />
                     <p>No messages yet. Send one to start!</p>
                   </div>
                 ) : (
-                  messagesData?.messages.map((msg) => (
+                  (messagesData?.messages ?? []).map((msg: any) => (
                     <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`
                         max-w-[70%] rounded-2xl px-4 py-3 shadow-md relative group

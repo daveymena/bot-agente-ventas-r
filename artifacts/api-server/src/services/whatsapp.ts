@@ -47,24 +47,48 @@ class WhatsAppService {
     qrCode: null,
     lastError: null,
   };
+  private isConnecting = false;
 
   setMessageHandler(handler: IncomingMessageHandler) {
     this.messageHandler = handler;
   }
 
   async connect(): Promise<void> {
-    // Solo bloquear si ya hay un socket vivo
+    if (this.isConnecting) {
+      console.log("[VentaFlow] Ya hay un intento de conexión en curso, ignorando...");
+      return;
+    }
+
+    // Solo bloquear si ya hay un socket vivo y estable
     if (this.sock && (this.state.status === "qr_pending" || this.state.status === "connected")) {
       return;
     }
-    // Cerrar socket previo si existe (importante para reconexión post-pairing)
+
+    this.isConnecting = true;
+    
+    // Cerrar socket previo si existe
     if (this.sock) {
-      try { this.sock.end(undefined); } catch {}
+      try { 
+        this.sock.ev.removeAllListeners("connection.update");
+        this.sock.ev.removeAllListeners("creds.update");
+        this.sock.ev.removeAllListeners("messages.upsert");
+        this.sock.end(undefined); 
+      } catch {}
       this.sock = null;
     }
+
     this.state.status = "connecting";
     this.state.qrCode = null;
     this.state.lastError = null;
+    
+    const logFile = path.resolve(process.cwd(), "whatsapp.log");
+    const log = (msg: string) => {
+      const line = `[${new Date().toISOString()}] ${msg}\n`;
+      fs.appendFileSync(logFile, line);
+      console.log(msg);
+    };
+
+    log(`[VentaFlow] Iniciando conexión (Status: ${this.state.status})...`);
 
     try {
       const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -104,28 +128,29 @@ class WhatsAppService {
         }
 
         if (connection === "open") {
+          this.isConnecting = false;
           this.state.connected = true;
           this.state.status = "connected";
           this.state.startTime = Date.now();
           this.state.qrCode = null;
           this.state.phone = this.sock?.user?.id?.split(":")[0]?.split("@")[0] ?? null;
           this.state.name = this.sock?.user?.name ?? null;
-          console.log(`[VentaFlow] Conectado como ${this.state.name} (${this.state.phone})`);
+          log(`[VentaFlow] Conexión ABIERTA exitosamente como ${this.state.name} (${this.state.phone})`);
         }
 
         if (connection === "close") {
+          this.isConnecting = false;
           const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
           const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-          console.log(`[VentaFlow] Conexión cerrada (code=${statusCode}), reconectar=${shouldReconnect}`);
+          log(`[VentaFlow] Conexión CERRADA (code=${statusCode}), reconectar=${shouldReconnect}`);
           this.state.connected = false;
           this.state.qrCode = null;
 
           if (shouldReconnect) {
             this.state.status = "connecting";
-            // Cerrar y limpiar socket actual para que connect() pueda crear uno nuevo
             this.sock = null;
             const delay = statusCode === 515 ? 1500 : 3000;
-            setTimeout(() => this.connect().catch(console.error), delay);
+            setTimeout(() => this.connect().catch(e => log(`[VentaFlow] Reconnect error: ${e.message}`)), delay);
           } else {
             this.state.status = "disconnected";
             this.state.startTime = null;
@@ -138,23 +163,29 @@ class WhatsAppService {
       this.sock.ev.on("messages.upsert", async ({ messages, type }) => {
         if (type !== "notify") return;
         for (const msg of messages) {
-          if (msg.key.fromMe || !msg.message) continue;
           const from = msg.key.remoteJid;
-          if (!from || from.endsWith("@g.us") || from === "status@broadcast") continue;
-
           const text =
-            msg.message.conversation ||
-            msg.message.extendedTextMessage?.text ||
-            msg.message.imageMessage?.caption ||
-            msg.message.videoMessage?.caption ||
+            msg.message?.conversation ||
+            msg.message?.extendedTextMessage?.text ||
+            msg.message?.imageMessage?.caption ||
+            msg.message?.videoMessage?.caption ||
             "";
 
-          if (!text || !this.messageHandler) continue;
+          console.log(`[VentaFlow] 📩 EVENTO RECIBIDO: de=${from} texto="${text}" deMi=${msg.key.fromMe}`);
+
+          if (!text) continue;
+          log(`[VentaFlow] Mensaje RECIBIDO de ${from}: "${text}"`);
+
+          if (!this.messageHandler) {
+            log(`[VentaFlow] ERROR: No hay messageHandler configurado.`);
+            continue;
+          }
 
           this.state.messagesHandled += 1;
           const phone = from.split("@")[0];
 
           try {
+            log(`[VentaFlow] Procesando respuesta con IA...`);
             const reply = await this.messageHandler({
               from: phone,
               text,
@@ -163,6 +194,7 @@ class WhatsAppService {
             });
 
             if (reply && this.sock) {
+              log(`[VentaFlow] Enviando RESPUESTA: "${reply}"`);
               // Anti-ban: simular comportamiento humano
               const readDelay = 500 + Math.random() * 700;
               await new Promise(r => setTimeout(r, readDelay));
@@ -174,17 +206,23 @@ class WhatsAppService {
               await this.sock.sendPresenceUpdate("paused", from);
 
               await this.sock.sendMessage(from, { text: reply });
+              log(`[VentaFlow] Mensaje ENVIADO exitosamente.`);
+            } else {
+              log(`[VentaFlow] La IA no generó respuesta o el bot está en modo manual.`);
             }
-          } catch (err) {
-            console.error("[VentaFlow] Error procesando mensaje:", err);
+          } catch (err: any) {
+            log(`[VentaFlow] ERROR procesando mensaje: ${err.message}`);
           }
         }
       });
     } catch (err: any) {
+      this.isConnecting = false;
       this.state.status = "disconnected";
       this.state.lastError = err?.message ?? String(err);
       console.error("[VentaFlow] Error conectando:", err);
       throw err;
+    } finally {
+      this.isConnecting = false;
     }
   }
 
@@ -225,6 +263,32 @@ class WhatsAppService {
       console.error("[VentaFlow] Error enviando mensaje:", e);
       return false;
     }
+  }
+
+  async sendImage(to: string, imageUrl: string, caption?: string) {
+    if (!this.sock) throw new Error("WhatsApp not connected");
+    
+    await this.sock.sendMessage(to, { 
+      image: { url: imageUrl },
+      caption: caption
+    });
+  }
+
+  // Métodos para el Dashboard
+  getStatus() {
+    return this.state;
+  }
+
+  getQR() {
+    return this.state.qrCode;
+  }
+
+  async initialize() {
+    return this.connect();
+  }
+
+  async logout() {
+    return this.disconnect();
   }
 }
 

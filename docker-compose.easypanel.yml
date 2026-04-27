@@ -1,0 +1,78 @@
+version: "3.9"
+
+# Configuración para EasyPanel con base de datos externa
+# Este archivo usa la base de datos PostgreSQL de EasyPanel en lugar de crear una local
+
+services:
+  ventaflow-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ventaflow-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      # Base de datos externa de EasyPanel
+      - DATABASE_URL=${DATABASE_URL}
+      - AI_PROVIDER=${AI_PROVIDER:-ollama}
+      - AI_MODEL=${AI_MODEL:-qwen2.5:1.5b}
+      - AI_API_KEY=${AI_API_KEY}
+      - OLLAMA_URL=${OLLAMA_URL:-https://n8n-ollama.ginee6.easypanel.host}
+      - AI_FALLBACK_ENABLED=${AI_FALLBACK_ENABLED:-true}
+      - AI_FALLBACK_PROVIDER=${AI_FALLBACK_PROVIDER:-ollama}
+      - TRANSFER_NEQUI=${TRANSFER_NEQUI}
+      - TRANSFER_DAVIPLATA=${TRANSFER_DAVIPLATA}
+      - TRANSFER_BANCOLOMBIA=${TRANSFER_BANCOLOMBIA}
+      - TRANSFER_NAME=${TRANSFER_NAME}
+      - MERCADO_PAGO_PUBLIC_KEY=${MERCADO_PAGO_PUBLIC_KEY}
+      - MERCADO_PAGO_ACCESS_TOKEN=${MERCADO_PAGO_ACCESS_TOKEN}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - PAYPAL_MODE=${PAYPAL_MODE:-sandbox}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+      - TYPING_DELAY_MIN=${TYPING_DELAY_MIN:-800}
+      - TYPING_DELAY_MAX=${TYPING_DELAY_MAX:-2000}
+      - READ_RECEIPT_DELAY=${READ_RECEIPT_DELAY:-500}
+      - BAILEYS_AUTH_DIR=${BAILEYS_AUTH_DIR:-./.baileys-auth}
+    volumes:
+      - ventaflow_data:/app/data
+      - ventaflow_baileys:/app/.baileys-auth
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ventaflow-web:
+    image: nginx:alpine
+    container_name: ventaflow-web
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    volumes:
+      - ./artifacts/whatsapp-bot/dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - ventaflow-api
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  ventaflow_data:
+    driver: local
+  ventaflow_baileys:
+    driver: local

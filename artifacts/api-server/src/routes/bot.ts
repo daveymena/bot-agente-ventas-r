@@ -1,224 +1,201 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { botConfigTable, contactsTable, conversationsTable, messagesTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { botConfigTable, conversationsTable, messagesTable, productsTable } from "@workspace/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { whatsappService } from "../services/whatsapp.js";
 import { callAI, PROVIDERS, type AIProvider } from "../services/ai-provider.js";
+import { paymentService } from "../services/payment.js";
+import fs from "fs";
+import crypto from "node:crypto";
 
 const router: IRouter = Router();
 
-async function ensureConfig() {
-  const existing = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
-  if (existing.length === 0) {
-    await db.insert(botConfigTable).values({ id: "default" });
-  }
-  const configs = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
-  return configs[0];
-}
+// --- LÓGICA DANIEL (ADN ORIGINAL INTEGRADO) ---
 
-// Auto-conectar WhatsApp al arrancar (intenta restaurar sesión guardada o genera QR)
-setTimeout(() => {
-  console.log("[VentaFlow] Auto-iniciando WhatsApp...");
-  whatsappService.connect().catch((e) => console.error("[VentaFlow] Auto-connect error:", e));
-}, 2000);
-
-// Wire up incoming WhatsApp messages -> AI -> reply + persist conversation
-whatsappService.setMessageHandler(async ({ from, text, pushName }) => {
+whatsappService.setMessageHandler(async ({ from, text }) => {
   try {
-    const config = await ensureConfig();
+    const config = (await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1))[0];
+    if (!config || !config.autoReply) return null;
 
-    // Upsert contact
-    const existingContact = await db.select().from(contactsTable).where(eq(contactsTable.phone, from)).limit(1);
-    if (existingContact.length === 0) {
-      await db.insert(contactsTable).values({
-        phone: from,
-        name: pushName ?? from,
-        stage: "lead",
-      }).onConflictDoNothing();
-    }
-
-    // Get or create conversation
     const existingConv = await db.select().from(conversationsTable).where(eq(conversationsTable.contactPhone, from)).limit(1);
-    let conversationId: string;
-    if (existingConv.length === 0) {
-      conversationId = crypto.randomUUID();
-      await db.insert(conversationsTable).values({
-        id: conversationId,
-        contactPhone: from,
-        contactName: pushName ?? from,
-        lastMessage: text,
-        lastMessageAt: new Date(),
-        status: "active",
-        unreadCount: 1,
-        aiHandled: !!config.autoReply,
-        totalMessages: 1,
-      });
+    let conversationId = existingConv[0]?.id || crypto.randomUUID();
+    
+    if (!existingConv[0]) {
+      await db.insert(conversationsTable).values({ id: conversationId, contactPhone: from, contactName: "Cliente", lastMessage: text, lastMessageAt: new Date(), status: "active", unreadCount: 1, aiHandled: true, salesStage: "welcome", totalMessages: 1 });
     } else {
-      conversationId = existingConv[0].id;
-      await db.update(conversationsTable)
-        .set({
-          lastMessage: text,
-          lastMessageAt: new Date(),
-          unreadCount: (existingConv[0].unreadCount ?? 0) + 1,
-          totalMessages: (existingConv[0].totalMessages ?? 0) + 1,
-        })
-        .where(eq(conversationsTable.id, conversationId));
+      await db.update(conversationsTable).set({ lastMessage: text, lastMessageAt: new Date(), totalMessages: (existingConv[0].totalMessages || 0) + 1 }).where(eq(conversationsTable.id, conversationId));
     }
 
-    // Persist inbound
-    await db.insert(messagesTable).values({
-      conversationId,
-      content: text,
-      direction: "inbound",
-      aiGenerated: false,
-      status: "delivered",
-      timestamp: new Date(),
+    await db.insert(messagesTable).values({ id: crypto.randomUUID(), conversationId, content: text, direction: "inbound", aiGenerated: false, status: "delivered", timestamp: new Date() });
+
+    const history = await db.select().from(messagesTable).where(eq(messagesTable.conversationId, conversationId)).orderBy(messagesTable.timestamp).limit(10);
+    const lowerText = text.toLowerCase();
+
+    // 2. DETECCIÓN DE PRODUCTO (Súper Sensible)
+    const products = await db.select().from(productsTable).limit(100);
+    const matchedProduct = products.find(p => {
+      const name = p.name.toLowerCase();
+      return lowerText.includes(name) || (name.includes("piano") && lowerText.includes("piano")) || (name.includes("excel") && lowerText.includes("excel"));
     });
 
-    if (!config.autoReply) return null;
-
-    // Working hours check
-    if (config.workingHoursStart && config.workingHoursEnd) {
-      const now = new Date();
-      const hh = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
-      if (hh < config.workingHoursStart || hh > config.workingHoursEnd) {
-        return config.offHoursMessage ?? null;
-      }
-    }
-
-    // Generate AI reply using configured provider
-    const provider = ((config as any).aiProvider ?? "ollama") as AIProvider;
-    const meta = PROVIDERS[provider];
-    const aiResp = await callAI(
-      [
-        { role: "system", content: config.systemPrompt ?? "Eres un asistente de ventas profesional." },
-        { role: "user", content: text },
-      ],
-      {
-        provider,
-        apiKey: (config as any).aiApiKey ?? undefined,
-        baseUrl: provider === "ollama" ? (config.ollamaUrl ?? meta.defaultBaseUrl) : meta.defaultBaseUrl,
-        model: (config as any).aiModel ?? (provider === "ollama" ? config.ollamaModel : meta.defaultModel),
-        temperature: 0.7,
-        maxTokens: 512,
-      }
-    );
-    const reply = aiResp.content?.trim() || null;
-
-    if (reply) {
-      await db.insert(messagesTable).values({
-        conversationId,
-        content: reply,
-        direction: "outbound",
-        aiGenerated: true,
-        status: "sent",
-        timestamp: new Date(),
+    // 3. CONSULTA AL CEREBRO HERMES (Microservicio)
+    let finalReply = "";
+    const hermesUrl = process.env.HERMES_URL || "http://hermes:5000";
+    
+    try {
+      console.log(`[Daniel] 🧠 Consultando a Hermes Agent...`);
+      const hermesRes = await fetch(`${hermesUrl}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          phone: from,
+          history: history.map(m => ({ role: m.direction === "inbound" ? "user" : "assistant", content: m.content }))
+        })
       });
+      const hermesData: any = await hermesRes.json();
+      finalReply = hermesData.response;
+      
+      // Si Hermes decide usar herramientas (ej: buscar producto)
+      if (hermesData.tool_calls && matchedProduct) {
+        console.log(`[Daniel] 🛠️ Hermes activó herramientas para: ${matchedProduct.name}`);
+        // Aquí se dispara la lógica de la Card Maestro que ya tenemos perfeccionada
+      }
+    } catch (e) {
+      console.error("[Daniel] Fallo conexión Hermes, usando IA de respaldo.");
+      const provider = ((config as any).aiProvider ?? "github") as AIProvider;
+      
+      // Inyectar catálogo completo al cerebro del bot
+      const productsList = products.map(p => `- ${p.name} (Precio: $${p.price.toLocaleString('es-CO')})`).join("\n");
+      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE EN BASE DE DATOS]:\n${productsList}\n\nUsa esta información para vender, guiar al cliente y confirmar si tenemos lo que busca.`;
+
+      const aiResp = await callAI(
+        [{ role: "system", content: systemPromptWithProducts }, ...history.map(m => ({ role: m.direction === "inbound" ? "user" as const : "assistant" as const, content: m.content })), { role: "user", content: text }],
+        { provider, apiKey: (config as any).aiApiKey, model: (config as any).aiModel || "gpt-4o-mini", temperature: 0.7 }
+      );
+      finalReply = aiResp.content || "¡Hola! Dame un momento para revisar los detalles de lo que buscas. 😊";
     }
-    return reply;
-  } catch (err) {
-    console.error("[VentaFlow] Handler error:", err);
+
+    if (matchedProduct) {
+      // A. IMAGEN
+      const imageName = (matchedProduct as any).imageUrl?.split('/').pop() || (matchedProduct as any).image;
+      const localImagePath = `c:\\Users\\ADMIN\\Downloads\\Openclaw-Automation\\Openclaw-Automation\\artifacts\\whatsapp-bot\\public\\products\\${imageName}`;
+      if (fs.existsSync(localImagePath)) await whatsappService.sendImage(from + "@s.whatsapp.net", localImagePath);
+
+      // B. CARD COMERCIAL DINÁMICA (SaaS Multi-producto)
+      const price = matchedProduct.price.toLocaleString('es-CO');
+      const name = matchedProduct.name.toUpperCase();
+      
+      // Asigna un emoji dinámico basado en la categoría o nombre
+      let emoji = "📦";
+      if (name.includes("CURSO") || name.includes("CLASE") || name.includes("GUIA")) emoji = "🎓";
+      else if (name.includes("SOFTWARE") || name.includes("SISTEMA") || name.includes("BOT")) emoji = "💻";
+      else if (name.includes("SERVICIO") || name.includes("ASESORIA")) emoji = "🤝";
+      
+      const description = matchedProduct.description || "Excelente producto garantizado para ti.";
+
+      let card = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      card += `${emoji} *${name}*\n`;
+      card += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      card += `✨ ${description}\n\n`;
+      card += `💰 PRECIO: $${price} COP\n\n`;
+      card += `👉 ¿Te gustaría adquirirlo? 😊`;
+
+      // Se usa la IA (finalReply) como base amigable, y se adjunta la Tarjeta
+      finalReply = (finalReply.length > 5 ? finalReply + "\n\n" : "") + card;
+
+      // C. CONFIRMACIÓN DE COMPRA (ADN COPIADO)
+      if (lowerText.includes("pago") || lowerText.includes("pagar") || lowerText.includes("link") || lowerText.includes("comprar")) {
+        const mpLink = await paymentService.createMercadoPagoLink(matchedProduct.name, matchedProduct.price, from);
+        const paypalLink = await paymentService.createPayPalLink(matchedProduct.name, Math.ceil(matchedProduct.price / 4000), from);
+        
+        let payMsg = `\n\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+        payMsg += `🎉 ¡EXCELENTE ELECCIÓN! 🚀\n`;
+        payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        payMsg += `📦 *PRODUCTO:* ${matchedProduct.name}\n`;
+        payMsg += `💰 *TOTAL A PAGAR:* $${price} COP\n\n`;
+        payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+        payMsg += `💳 MÉTODOS DE PAGO\n`;
+        payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        payMsg += `📱 *NEQUI o DAVIPLATA*\n`;
+        payMsg += `• Número: *3136174267*\n`;
+        payMsg += `• Titular: *Deiner Mena*\n\n`;
+        payMsg += `🌐 *PAGO ONLINE (Link)*\n`;
+        payMsg += `• Mercado Pago: ${mpLink}\n`;
+        payMsg += `• PayPal: ${paypalLink}\n\n`;
+        payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+        payMsg += `✅ *INSTRUCCIONES DE ENTREGA:*\n`;
+        payMsg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        payMsg += `1️⃣ Realiza el pago por tu medio preferido.\n`;
+        payMsg += `2️⃣ Envía el *comprobante* (pantallazo).\n`;
+        payMsg += `3️⃣ Pásame tu *Gmail* para el acceso al Drive.\n\n`;
+        payMsg += `👉 ¿Por cuál medio deseas pagar? 😊`;
+        
+        finalReply = payMsg; // En el flujo original, la confirmación de compra suele reemplazar el pitch
+      }
+    }
+
+    if (!finalReply) finalReply = "¡Hola! 👋 Soy Daniel. ¿Qué curso buscas hoy? ✨";
+
+    await db.insert(messagesTable).values({ id: crypto.randomUUID(), conversationId, content: finalReply, direction: "outbound", aiGenerated: true, status: "sent", timestamp: new Date() });
+    await whatsappService.sendMessage(from + "@s.whatsapp.net", finalReply);
+    return finalReply;
+  } catch (err: any) {
+    console.error("[Daniel] Error:", err.message);
     return null;
   }
 });
 
-router.get("/status", async (_req, res) => {
-  const s = whatsappService.state;
-  const uptime = s.startTime ? Date.now() - s.startTime : null;
-  res.json({
-    connected: s.connected,
-    phone: s.phone,
-    name: s.name,
-    status: s.status,
-    uptime,
-    messagesHandled: s.messagesHandled,
-    lastError: s.lastError,
-  });
+// --- ENDPOINTS RESTAURADOS PARA EL DASHBOARD ---
+
+router.get("/status", (req, res) => {
+  res.json(whatsappService.state);
 });
 
-router.get("/config", async (_req, res) => {
-  const config = await ensureConfig();
-  res.json(formatConfig(config));
+router.get("/qr", (req, res) => {
+  res.json({ qr: whatsappService.state.qrCode });
 });
 
-function formatConfig(config: typeof botConfigTable.$inferSelect) {
-  return {
-    id: config.id,
-    businessName: config.businessName,
-    welcomeMessage: config.welcomeMessage,
-    systemPrompt: config.systemPrompt,
-    ollamaUrl: config.ollamaUrl,
-    ollamaModel: config.ollamaModel,
-    autoReply: config.autoReply,
-    workingHoursStart: config.workingHoursStart,
-    workingHoursEnd: config.workingHoursEnd,
-    offHoursMessage: config.offHoursMessage,
-    allowedNumbers: config.allowedNumbers ? config.allowedNumbers.split(",").filter(Boolean) : [],
-    paymentMethods: (config as any).paymentMethods ? (config as any).paymentMethods.split(",").filter(Boolean) : [],
-    language: (config as any).language ?? "es",
-    createdAt: config.createdAt.toISOString(),
-    updatedAt: config.updatedAt.toISOString(),
-  };
-}
-
-router.put("/config", async (req, res) => {
-  const body = req.body;
-  await ensureConfig();
-  const updates: Record<string, unknown> = { updatedAt: new Date() };
-  if (body.businessName !== undefined) updates.businessName = body.businessName;
-  if (body.welcomeMessage !== undefined) updates.welcomeMessage = body.welcomeMessage;
-  if (body.systemPrompt !== undefined) updates.systemPrompt = body.systemPrompt;
-  if (body.ollamaUrl !== undefined) updates.ollamaUrl = body.ollamaUrl;
-  if (body.ollamaModel !== undefined) updates.ollamaModel = body.ollamaModel;
-  if (body.autoReply !== undefined) updates.autoReply = body.autoReply;
-  if (body.workingHoursStart !== undefined) updates.workingHoursStart = body.workingHoursStart;
-  if (body.workingHoursEnd !== undefined) updates.workingHoursEnd = body.workingHoursEnd;
-  if (body.offHoursMessage !== undefined) updates.offHoursMessage = body.offHoursMessage;
-  if (body.allowedNumbers !== undefined) updates.allowedNumbers = Array.isArray(body.allowedNumbers) ? body.allowedNumbers.join(",") : body.allowedNumbers;
-  if (body.paymentMethods !== undefined) (updates as any).paymentMethods = Array.isArray(body.paymentMethods) ? body.paymentMethods.join(",") : body.paymentMethods;
-  if (body.language !== undefined) (updates as any).language = body.language;
-
-  await db.update(botConfigTable).set(updates).where(eq(botConfigTable.id, "default"));
-  const config = await ensureConfig();
-  res.json(formatConfig(config));
-});
-
-router.get("/qr", (_req, res) => {
-  res.json({
-    qr: whatsappService.state.qrCode,
-    status: whatsappService.state.status,
-  });
-});
-
-router.post("/connect", async (_req, res) => {
+router.post("/connect", async (req, res) => {
   try {
-    // Fire and forget - QR will appear via /qr polling
-    whatsappService.connect().catch((e) => console.error("[bot] connect error:", e));
-    const s = whatsappService.state;
-    res.json({
-      connected: s.connected,
-      phone: s.phone,
-      name: s.name,
-      status: s.status,
-      uptime: s.startTime ? Date.now() - s.startTime : null,
-      messagesHandled: s.messagesHandled,
-    });
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message ?? "connect failed" });
+    await whatsappService.connect();
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-router.post("/disconnect", async (_req, res) => {
-  await whatsappService.disconnect();
-  const s = whatsappService.state;
-  res.json({
-    connected: false,
-    phone: null,
-    name: null,
-    status: "disconnected",
-    uptime: null,
-    messagesHandled: s.messagesHandled,
-  });
+router.post("/disconnect", async (req, res) => {
+  try {
+    await whatsappService.disconnect();
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/config", async (req, res) => {
+  try {
+    const config = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
+    res.json(config[0] || {});
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/config", async (req, res) => {
+  try {
+    const data = req.body;
+    const existing = await db.select().from(botConfigTable).where(eq(botConfigTable.id, "default")).limit(1);
+    if (existing.length === 0) {
+      await db.insert(botConfigTable).values({ id: "default", ...data });
+    } else {
+      await db.update(botConfigTable).set(data).where(eq(botConfigTable.id, "default"));
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

@@ -13,9 +13,9 @@ export default function Contacts() {
   const { data, isLoading } = useListContacts();
   const [search, setSearch] = useState("");
   
-  const contacts = data?.contacts.filter(c => 
-    c.phone.includes(search) || c.name?.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const contacts = (data?.contacts ?? (Array.isArray(data) ? data : [])).filter((c: any) => 
+    (c.phone ?? "").includes(search) || (c.name?.toLowerCase() ?? "").includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">

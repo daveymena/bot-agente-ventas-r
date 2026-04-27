@@ -25,20 +25,40 @@ type Session = {
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 async function apiPost(path: string, body: unknown) {
-  const res = await fetch(`${BASE}/api${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/api${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  } catch (e) {
+    console.error("API Post Error:", e);
+    return {};
+  }
 }
+
 async function apiGet(path: string) {
-  const res = await fetch(`${BASE}/api${path}`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/api${path}`);
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  } catch (e) {
+    console.error("API Get Error:", e);
+    return {};
+  }
 }
+
 async function apiDelete(path: string) {
-  const res = await fetch(`${BASE}/api${path}`, { method: "DELETE" });
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/api${path}`, { method: "DELETE" });
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  } catch (e) {
+    console.error("API Delete Error:", e);
+    return {};
+  }
 }
 
 export default function Agent() {

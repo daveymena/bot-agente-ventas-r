@@ -1,0 +1,380 @@
+[2026-04-26T22:41:56.576Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T22:41:59.000Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T22:45:24.669Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T22:45:24.671Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T22:45:25.937Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T22:45:33.877Z] [VentaFlow] Mensaje RECIBIDO de 573136174267@s.whatsapp.net: "Hola"
+[2026-04-26T22:45:33.882Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T22:45:35.184Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T22:45:49.110Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T22:45:49.113Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T22:45:50.330Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:02:38.204Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:39.248Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:39.705Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:02:42.266Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:42.940Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:43.573Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:02:45.945Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:46.573Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:47.100Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:02:49.578Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:50.610Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:52.297Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:02:53.620Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:54.506Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:55.243Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:02:57.513Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:02:58.129Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:02:58.683Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:01.143Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:01.767Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:02.190Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:04.772Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:05.336Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:05.911Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:08.349Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:08.915Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:09.459Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:11.920Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:12.972Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:14.644Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:15.986Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:16.621Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:17.063Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:19.624Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:20.361Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:20.913Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:23.377Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:24.262Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:25.662Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:27.275Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:28.189Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:28.561Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:31.199Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:31.816Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:32.370Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:34.820Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:35.375Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:35.955Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:38.383Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:38.972Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:39.554Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:41.975Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:42.791Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:43.581Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:45.793Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:46.689Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:47.994Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:49.701Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:50.268Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:50.750Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:53.276Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:53.909Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:54.446Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:03:56.921Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:03:57.477Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:03:58.050Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:00.480Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:01.069Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:01.497Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:04.071Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:04.859Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:05.676Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:07.863Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:08.838Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:10.188Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:11.840Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:12.592Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:12.990Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:15.595Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:16.241Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:16.703Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:19.252Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:19.791Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:20.305Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:22.799Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:23.524Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:24.004Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:26.527Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:27.402Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:28.713Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:30.418Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:31.577Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:33.042Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:34.580Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:35.658Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:37.058Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:38.668Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:39.313Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:39.790Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:42.321Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:43.093Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:43.898Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:46.095Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:46.713Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:47.295Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:49.722Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:50.472Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:50.923Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:53.479Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:54.247Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:55.067Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:04:57.250Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:04:58.291Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:04:59.869Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:05:01.304Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:05:01.971Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:05:02.422Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:05:04.989Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:05:05.932Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:05:07.297Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:05:08.939Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:05:10.084Z] [VentaFlow] Conexión CERRADA (code=440), reconectar=true
+[2026-04-26T23:05:11.465Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:08:14.594Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:08:16.575Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:10:57.855Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:10:57.856Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:10:59.142Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:12:02.262Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:12:02.263Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:12:03.463Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:17:51.433Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:17:53.840Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:18:30.285Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:18:30.286Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:18:31.498Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:18:48.102Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:18:50.698Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:19:56.357Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:19:57.752Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:22:34.136Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:22:36.681Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:23:13.882Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:23:16.341Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:23:51.361Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Holab"
+[2026-04-26T23:23:51.362Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:23:52.631Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:24:55.369Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:24:55.370Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:24:56.649Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:25:34.980Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:25:37.063Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:25:58.450Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:25:58.451Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:25:59.728Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:27:23.438Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:27:25.269Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:28:11.264Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:28:11.264Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:28:12.803Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:29:24.355Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:29:25.622Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:29:42.944Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-26T23:29:42.944Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:29:44.330Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:30:00.714Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:30:00.715Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:30:02.123Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:30:28.265Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:30:28.267Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:30:28.934Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:31:30.572Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:31:31.894Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:31:54.127Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:31:54.128Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:31:55.705Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:32:14.676Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:32:14.677Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:32:15.558Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:35:20.834Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:35:22.356Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:35:42.020Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola"
+[2026-04-26T23:35:42.021Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:35:43.738Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:36:38.297Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:36:39.955Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:36:50.418Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas hola"
+[2026-04-26T23:36:50.419Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:36:52.173Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-26T23:37:29.655Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:37:31.991Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:37:48.207Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-26T23:37:48.207Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:37:52.360Z] [VentaFlow] Enviando RESPUESTA: "¡Hola! ¿Cómo puedo ayudarte hoy? 😊"
+[2026-04-26T23:37:55.880Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-26T23:38:11.575Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el megapack de o curso de piano"
+[2026-04-26T23:38:11.576Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-26T23:38:16.469Z] [VentaFlow] Enviando RESPUESTA: "¡Excelente elección! 🎹 El MEGAPACK DE CURSO DE PIANO es nuestro contenido más completo...
+
+
+
+
+
+━━━━━━━━━━━━━━━━━━━━━
+📦 *TU PACK INCLUYE:*
+━━━━━━━━━━━━━━━━━━━━━
+🎹 *MEGAPACK DE CURSO DE PIANO*
+
+
+
+
+✅ *Beneficios Principales:*
+✓ Acceso de por vida a Google Drive
+✓ Actualizaciones constantes incluidas
+✓ Contenido profesional y práctico
+
+
+
+
+📂 *Detalles Técnicos:*
+🔹 Secciones: 19 Módulos
+🔹 Clases totales: 283 Lecciones
+
+
+
+
+
+✨ ¿Te gustaría que te envíe los datos para el pago?"
+[2026-04-26T23:38:19.085Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-26T23:40:59.234Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:41:01.104Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:41:49.946Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:41:51.363Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:43:42.907Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:43:44.286Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:46:56.663Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:46:57.949Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-26T23:57:33.567Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-26T23:57:35.345Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T00:01:02.218Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-27T00:01:02.220Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T00:01:03.970Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-27T00:14:17.894Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T00:14:20.381Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T00:14:22.567Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T00:14:30.613Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-27T00:14:30.613Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T00:14:35.826Z] [VentaFlow] Enviando RESPUESTA: "✨ ━━━━━━━━━━━━━━ ✨  
+  🌟 ¡HOLA! BIENVENIDO 🌟  
+✨ ━━━━━━━━━━━━━━ ✨  
+
+¡Qué gusto saludarte! 👋 Soy Daniel, de **Tecnovariedades D&S**. 💎
+
+¿En qué puedo apoyarte hoy para potenciar tus proyectos? 🚀  
+Dime qué pack o curso buscas y nos ponemos manos a la obra. ✨"
+[2026-04-27T00:14:39.034Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T00:15:01.989Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el megapack o curso de piano"
+[2026-04-27T00:15:01.990Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T00:15:07.220Z] [VentaFlow] Enviando RESPUESTA: "┌─── ∘◦ ⭐ ◦∘ ───┐
+      ASESORÍA VIP
+└─── ∘◦ ⭐ ◦∘ ───┘
+
+¡Hola! 👋 Hablas con Daniel. ¡Excelente elección! El megapack de piano es uno de nuestros productos más completos y solicitados. 💎✨
+
+Este curso está diseñado para llevarte desde los conceptos básicos hasta un nivel avanzado, permitiéndote tocar tus canciones favoritas y desarrollar tu habilidad musical de manera efectiva. Además, con acceso de por vida, podrás aprender a tu propio ritmo y revisitar las lecciones siempre que lo necesites. 🚀🔥
+
+¿Te parece si te cuento cómo es el proceso de acceso? 😊📲"
+[2026-04-27T00:15:09.525Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T00:19:16.082Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T00:19:18.047Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T00:19:27.090Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el curso o megapsck de piano"
+[2026-04-27T00:19:27.091Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T00:19:32.083Z] [VentaFlow] Enviando RESPUESTA: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  
+🎹 *MEGAPACK DE CURSO DE PIANO*  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  
+🎯 Este megapack te ofrece un recorrido completo desde lo más básico hasta técnicas avanzadas para dominar el piano. Ideal tanto para principiantes como para quienes desean mejorar sus habilidades. 
+
+✨ INCLUYE: ✅ Acceso de por vida, ✅ Actualizaciones constantes, ✅ Soporte VIP  
+📚 CONTENIDO: 📖 Música 🎬 +283 clases ⏱️ Full contenido  
+💰 PRECIO: $149.900 COP  
+⚡ ENTREGA: Inmediata por Google Drive  
+
+👉 ¿Te gustaría adquirirlo? 😊"
+[2026-04-27T00:19:34.340Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T00:29:19.356Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T00:29:21.857Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T00:29:30.421Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el curso o megapsck de piano"
+[2026-04-27T00:29:30.423Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T00:29:37.884Z] [VentaFlow] Enviando RESPUESTA: "┌─── ∘◦ ⭐ ◦∘ ───┐
+      ASESORÍA VIP
+└─── ∘◦ ⭐ ◦∘ ───┘
+
+¡Hola! 👋 Hablas con Daniel. ¡Qué buena elección! El MEGAPACK DE CURSO DE PIANO es uno de nuestros productos más completos y demandados. 🎹✨
+
+Este pack está diseñado para llevarte desde lo más básico hasta un nivel avanzado en el piano. Incluye un contenido extenso y diversas metodologías para que aprendas de manera efectiva y a tu ritmo. 
+
+✅ **Beneficios Incluidos:**
+- Acceso de por vida
+- Actualizaciones constantes
+- Soporte VIP para resolver tus dudas
+
+📚 **Contenido:**
+- *Más de 280 clases* que cubren teoría, técnica y práctica.
+
+💰 **Precio:** Solo $200.000 COP
+
+⚡ **Entrega:** Inmediata por Google Drive
+
+¿Te gustaría que te explique el proceso de acceso? 😊📲"
+[2026-04-27T00:29:40.938Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T01:15:43.788Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T01:15:45.371Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T01:15:56.375Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-27T01:15:56.376Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T01:16:01.044Z] [VentaFlow] Enviando RESPUESTA: "✨ ━━━━━━━━━━━━━━ ✨  
+🌟 ¡HOLA! BIENVENIDO 🌟  
+✨ ━━━━━━━━━━━━━━ ✨  
+
+¡Qué gusto saludarte! 👋 Soy Daniel, de **Tecnovariedades D&S**. 💎
+
+¿En qué puedo apoyarte hoy para potenciar tus proyectos? 🚀 Dime qué pack o curso buscas y nos ponemos manos a la obra. ✨"
+[2026-04-27T01:16:03.218Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T01:16:14.989Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el curso de piano"
+[2026-04-27T01:16:14.991Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T01:16:21.095Z] [VentaFlow] Enviando RESPUESTA: "┌─── ∘◦ ⭐ ◦∘ ───┐
+      ASESORÍA VIP
+└─── ∘◦ ⭐ ◦∘ ───┘
+
+¡Hola! 👋 Hablas con Daniel. ¡Excelente elección! El curso de piano es una de nuestras joyas más valoradas. 🎹💎 
+
+Te cuento que este curso está diseñado para todos los niveles y te permitirá aprender a tocar desde lo más básico hasta piezas complejas. ¡Imagina poder tocar tus canciones favoritas en poco tiempo! 🚀
+
+¿Te gustaría que te comparta más detalles sobre el contenido y cómo acceder? 😊📲"
+[2026-04-27T01:16:22.699Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T01:17:42.747Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Si"
+[2026-04-27T01:17:42.748Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T01:17:47.416Z] [VentaFlow] Enviando RESPUESTA: "✨ ━━━━━━━━━━━━━━ ✨  
+🌟 ¡HOLA! BIENVENIDO 🌟  
+✨ ━━━━━━━━━━━━━━ ✨  
+
+¡Qué gusto saludarte! 👋 Soy Daniel, de **Tecnovariedades D&S**. 💎
+
+¿En qué puedo apoyarte hoy para potenciar tus proyectos? 🚀 Dime qué pack o curso buscas y nos ponemos manos a la obra. ✨"
+[2026-04-27T01:17:49.443Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T01:21:42.116Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T01:21:43.438Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T01:24:40.962Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T01:24:42.448Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T01:24:51.985Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el curso de piano"
+[2026-04-27T01:24:51.986Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T01:24:54.087Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.
+[2026-04-27T03:21:41.999Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T03:22:08.603Z] [VentaFlow] Conexión CERRADA (code=515), reconectar=true
+[2026-04-27T03:22:10.105Z] [VentaFlow] Iniciando conexión (Status: connecting)...
+[2026-04-27T03:22:15.315Z] [VentaFlow] Conexión ABIERTA exitosamente como Tecnovariedades (573042748687)
+[2026-04-27T03:23:29.216Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Hola muy buenas"
+[2026-04-27T03:23:29.216Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T03:23:39.119Z] [VentaFlow] Enviando RESPUESTA: "✨ ━━━━━━━━━━━━━━ ✨  
+  🌟 ¡HOLA! BIENVENIDO 🌟  
+✨ ━━━━━━━━━━━━━━ ✨  
+
+¡Qué gusto saludarte! 👋 Soy Daniel, de **Tecnovariedades D&S**. 💎
+
+¿En qué puedo apoyarte hoy para potenciar tus proyectos? 🚀  
+Dime qué pack o curso buscas y nos ponemos manos a la obra. ✨"
+[2026-04-27T03:23:42.423Z] [VentaFlow] Mensaje ENVIADO exitosamente.
+[2026-04-27T03:23:57.330Z] [VentaFlow] Mensaje RECIBIDO de 6988129931330@lid: "Me interesa el megapack o curso de piano"
+[2026-04-27T03:23:57.331Z] [VentaFlow] Procesando respuesta con IA...
+[2026-04-27T03:24:10.993Z] [VentaFlow] La IA no generó respuesta o el bot está en modo manual.

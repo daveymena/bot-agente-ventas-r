@@ -33,7 +33,7 @@ export default function Automations() {
         <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-4">
-          {data?.rules.map(rule => (
+          {(data?.rules ?? (Array.isArray(data) ? data : [])).map((rule: any) => (
             <Card key={rule.id} className={`bg-card/40 backdrop-blur-sm border-border/50 shadow-md transition-all ${!rule.enabled ? 'opacity-60' : ''}`}>
               <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="flex-shrink-0 pt-1 sm:pt-0">
@@ -70,7 +70,7 @@ export default function Automations() {
               </CardContent>
             </Card>
           ))}
-          {data?.rules.length === 0 && (
+          {(data?.rules ?? (Array.isArray(data) ? data : [])).length === 0 && (
             <div className="py-16 text-center text-muted-foreground border-2 border-dashed border-border/50 rounded-2xl bg-card/20">
               <Workflow className="w-12 h-12 mx-auto mb-4 opacity-20" />
               <h3 className="text-lg font-bold text-foreground">No automations yet</h3>

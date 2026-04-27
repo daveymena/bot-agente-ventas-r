@@ -11,6 +11,8 @@ import agentRouter from "./agent";
 import skillsRouter from "./skills";
 import memoryRouter from "./memory";
 import aiRouter from "./ai";
+import webhooksRouter from "./webhooks";
+import settingsRouter from "./settings";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use("/agent", agentRouter);
 router.use("/skills", skillsRouter);
 router.use("/memory", memoryRouter);
 router.use("/ai", aiRouter);
+router.use("/webhooks", webhooksRouter);
+router.use("/settings", settingsRouter);
 
 export default router;

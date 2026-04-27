@@ -12,8 +12,9 @@ export const botConfigTable = pgTable("bot_config", {
   ollamaTemperature: text("ollama_temperature").notNull().default("0.7"),
   ollamaMaxTokens: text("ollama_max_tokens").notNull().default("512"),
   autoReply: boolean("auto_reply").notNull().default(true),
-  workingHoursStart: varchar("working_hours_start", { length: 5 }).default("09:00"),
-  workingHoursEnd: varchar("working_hours_end", { length: 5 }).default("18:00"),
+  workingHoursEnabled: boolean("working_hours_enabled").notNull().default(false), // 24/7 por defecto
+  workingHoursStart: varchar("working_hours_start", { length: 5 }).default("00:00"),
+  workingHoursEnd: varchar("working_hours_end", { length: 5 }).default("23:59"),
   offHoursMessage: text("off_hours_message").default("Gracias por contactarnos. Actualmente estamos fuera de horario. Te responderemos pronto."),
   allowedNumbers: text("allowed_numbers").default(""),
   paymentMethods: text("payment_methods").default("cash,card,paypal,mercadolibre"),

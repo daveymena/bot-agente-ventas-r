@@ -39,28 +39,30 @@ const PRODUCTS_JSON_PATH = path.resolve(__dirname, "../data/products.json");
 async function seed() {
   console.log("[VentaFlow] Sembrando base de datos con catálogo real...");
 
-  // Bot configuration
+  // Bot configuration - 24/7 operation
   await db.insert(botConfigTable).values({
     id: "default",
     businessName: "VentaFlow",
     welcomeMessage:
-      "¡Hola! 👋 Bienvenido a VentaFlow. Soy tu asesor comercial automatizado. Tenemos más de 80 cursos digitales descargables (Diseño, Marketing, Excel, Idiomas, Tech, Música, Oficios y más). ¿Qué te gustaría aprender hoy?",
+      "¡Hola! 👋 Bienvenido a VentaFlow. Soy tu asesor comercial automatizado disponible 24/7. Tenemos más de 80 cursos digitales descargables (Diseño, Marketing, Excel, Idiomas, Tech, Música, Oficios y más). ¿Qué te gustaría aprender hoy?",
     systemPrompt:
       "Eres un asesor de ventas profesional de VentaFlow, un sistema automatizado que comercializa cursos digitales descargables (Megapacks). " +
       "Cada curso incluye: contenido virtual y descargable (MP4/PDF), acceso permanente vía Google Drive, sin clases en vivo, estudio autónomo, sin certificación oficial, entrega inmediata. " +
       "Precios: el catálogo principal cuesta $20.000 COP por curso (algunos premium $60.000 COP). " +
       "Métodos de pago: Nequi, Daviplata, Bancolombia, PSE. " +
       "Tu objetivo es: 1) Saludar al prospecto cordialmente, 2) Detectar qué tipo de curso busca, 3) Presentar el curso con su emoji, descripción, número de clases y duración, 4) Manejar objeciones (precio, entrega, certificación), 5) Cerrar la venta confirmando método de pago y enviando link de Google Drive tras pago, 6) Seguimiento post-venta. " +
-      "Responde siempre en español, sé amable, profesional y conciso. Usa emojis con moderación.",
+      "Responde siempre en español, sé amable, profesional y conciso. Usa emojis con moderación. " +
+      "Estás disponible 24/7 para atender a los clientes en cualquier momento.",
     ollamaUrl: "https://n8n-ollama.ginee6.easypanel.host",
     ollamaModel: "qwen2.5:1.5b",
     ollamaTemperature: "0.7",
     ollamaMaxTokens: "512",
     autoReply: true,
-    workingHoursStart: "08:00",
-    workingHoursEnd: "22:00",
+    workingHoursEnabled: false, // Deshabilitado = 24/7
+    workingHoursStart: "00:00",
+    workingHoursEnd: "23:59",
     offHoursMessage:
-      "¡Gracias por escribir a VentaFlow! 🌙 Estamos fuera de horario. Te responderemos mañana desde las 8:00 AM. Mientras tanto puedes revisar nuestro catálogo.",
+      "¡Gracias por escribir a VentaFlow! 🌙 Aunque estamos disponibles 24/7, si necesitas atención personalizada, un asesor humano te contactará pronto.",
     allowedNumbers: "",
     paymentMethods: "Nequi,Daviplata,Bancolombia,PSE",
     language: "es",

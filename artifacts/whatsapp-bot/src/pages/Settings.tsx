@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bot, Server, Save, Loader2, PlayCircle, CheckCircle2, AlertCircle, CreditCard, Globe } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
 export default function Settings() {
   return (
@@ -23,12 +23,15 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="bot" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-secondary/50 p-1 rounded-xl mb-6">
+        <TabsList className="grid w-full grid-cols-3 bg-secondary/50 p-1 rounded-xl mb-6">
           <TabsTrigger value="bot" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
             <Bot className="w-4 h-4 mr-2" /> Bot Profile
           </TabsTrigger>
           <TabsTrigger value="ollama" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
             <Server className="w-4 h-4 mr-2" /> Ollama AI
+          </TabsTrigger>
+          <TabsTrigger value="system" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+            <Globe className="w-4 h-4 mr-2" /> System .ENV
           </TabsTrigger>
         </TabsList>
         <TabsContent value="bot">
@@ -36,6 +39,9 @@ export default function Settings() {
         </TabsContent>
         <TabsContent value="ollama">
           <OllamaConfigForm />
+        </TabsContent>
+        <TabsContent value="system">
+          <SystemConfigForm />
         </TabsContent>
       </Tabs>
     </div>
@@ -298,6 +304,153 @@ function OllamaConfigForm() {
                <AlertCircle className="w-4 h-4" /> Failed to reach Ollama. Check URL and ensure model exists.
              </div>
           )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function SystemConfigForm() {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState<any>({});
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Consultar configuración actual
+  const { data, isLoading } = useQuery({
+    queryKey: ['/api/settings'],
+    queryFn: async () => {
+      const res = await fetch("/api/settings");
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    }
+  });
+
+  useEffect(() => {
+    if (data) setFormData(data);
+  }, [data]);
+
+  // Enviar configuración al servidor
+  const updateMut = useMutation({
+    mutationFn: async (newData: any) => {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newData)
+      });
+      if (!res.ok) throw new Error("Failed to update settings");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['/api/settings']});
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMut.mutate(formData);
+  };
+
+  const handleChange = (key: string, value: string) => {
+    setFormData((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-card/40 backdrop-blur-sm border-border/50 shadow-xl">
+        <CardHeader>
+          <CardTitle className="font-display flex items-center gap-2">
+            <Globe className="w-5 h-5 text-primary" /> System .ENV Master
+          </CardTitle>
+          <CardDescription>
+            Configuraciones críticas del servidor (IA, Pagos, Notificaciones).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            
+            {/* --- SECCIÓN IA --- */}
+            <div className="space-y-4 p-4 border border-border/50 rounded-xl bg-secondary/10">
+              <h3 className="text-lg font-bold">Motor de Inteligencia Artificial</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Proveedor Principal</label>
+                  <Select value={formData.AI_PROVIDER || ''} onValueChange={(v) => handleChange('AI_PROVIDER', v)}>
+                    <SelectTrigger className="bg-background"><SelectValue placeholder="Selecciona" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="github">GitHub Models (Copilot)</SelectItem>
+                      <SelectItem value="ollama">Ollama (Local/Proxy)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">GitHub Token</label>
+                  <Input type="password" value={formData.GITHUB_TOKEN || ''} onChange={e => handleChange('GITHUB_TOKEN', e.target.value)} className="bg-background" />
+                </div>
+              </div>
+            </div>
+
+            {/* --- SECCIÓN PAGOS --- */}
+            <div className="space-y-4 p-4 border border-border/50 rounded-xl bg-secondary/10">
+              <h3 className="text-lg font-bold">Pasarelas de Pago</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Número de Nequi/Daviplata</label>
+                  <Input value={formData.TRANSFER_NUMBER || ''} onChange={e => handleChange('TRANSFER_NUMBER', e.target.value)} className="bg-background font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Titular (Nombre)</label>
+                  <Input value={formData.TRANSFER_NAME || ''} onChange={e => handleChange('TRANSFER_NAME', e.target.value)} className="bg-background" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-muted-foreground">MercadoPago Access Token</label>
+                  <Input type="password" value={formData.MERCADO_PAGO_ACCESS_TOKEN || ''} onChange={e => handleChange('MERCADO_PAGO_ACCESS_TOKEN', e.target.value)} className="bg-background" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">PayPal Client ID</label>
+                  <Input type="password" value={formData.PAYPAL_CLIENT_ID || ''} onChange={e => handleChange('PAYPAL_CLIENT_ID', e.target.value)} className="bg-background" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">PayPal Secret</label>
+                  <Input type="password" value={formData.PAYPAL_CLIENT_SECRET || ''} onChange={e => handleChange('PAYPAL_CLIENT_SECRET', e.target.value)} className="bg-background" />
+                </div>
+              </div>
+            </div>
+
+            {/* --- SECCIÓN NOTIFICACIONES --- */}
+            <div className="space-y-4 p-4 border border-border/50 rounded-xl bg-secondary/10">
+              <h3 className="text-lg font-bold">Notificaciones por Correo (SMTP)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Correo Emisor (Gmail)</label>
+                  <Input value={formData.SMTP_USER || ''} onChange={e => handleChange('SMTP_USER', e.target.value)} className="bg-background" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contraseña de Aplicación</label>
+                  <Input type="password" value={formData.SMTP_PASS || ''} onChange={e => handleChange('SMTP_PASS', e.target.value)} className="bg-background" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Recibir alertas en:</label>
+                  <Input value={formData.EMAIL_TO || ''} onChange={e => handleChange('EMAIL_TO', e.target.value)} className="bg-background" />
+                </div>
+              </div>
+            </div>
+
+            <Button type="submit" disabled={updateMut.isPending} className="w-full sm:w-auto shadow-lg shadow-primary/20">
+              {updateMut.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Guardar Configuración Maestra
+            </Button>
+            
+            {saveSuccess && (
+              <p className="text-sm text-green-500 font-bold mt-2">¡Guardado con éxito! (Algunos cambios como IA o SMTP requieren reiniciar el contenedor)</p>
+            )}
+            {updateMut.isError && (
+              <p className="text-sm text-destructive font-bold mt-2">Error al guardar. Revisa la consola del servidor.</p>
+            )}
+          </form>
         </CardContent>
       </Card>
     </div>

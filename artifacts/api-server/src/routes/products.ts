@@ -49,21 +49,54 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.post("/import/json", async (req, res) => {
-  const items = req.body;
-  if (!Array.isArray(items)) return res.status(400).json({ error: "Expected a JSON array of products" });
-  const valid = items.filter((p: any) => p.name && p.price !== undefined);
-  if (!valid.length) return res.status(400).json({ error: "No valid products found. Each needs 'name' and 'price'" });
-  const inserted = await db.insert(productsTable).values(
-    valid.map((p: any) => ({
-      name: String(p.name),
-      description: p.description ? String(p.description) : null,
-      price: Number(p.price),
-      category: p.category ? String(p.category) : null,
-      inStock: p.inStock !== false && p.in_stock !== false,
-      imageUrl: p.imageUrl ?? p.image_url ?? null,
-    }))
-  ).returning();
-  res.status(201).json({ imported: inserted.length, products: inserted.map(formatProduct) });
+  try {
+    let items = req.body;
+    
+    // Si viene anidado (ej. { data: [...] }), extraer el array
+    if (!Array.isArray(items) && typeof items === 'object') {
+      const arrayValues = Object.values(items).find(v => Array.isArray(v));
+      if (arrayValues) items = arrayValues;
+      else return res.status(400).json({ error: "No se encontró un listado de productos en el archivo." });
+    }
+    
+    if (!Array.isArray(items)) return res.status(400).json({ error: "Formato no válido. Se esperaba una lista." });
+    
+    // Normalizador a prueba de balas
+    const valid = items.map((p: any) => {
+      // Detección heurística de columnas (Español/Inglés)
+      const name = p.name || p.nombre || p.titulo || p.title || p.producto || p.product || p.Item || Object.values(p)[0];
+      const rawPrice = p.price || p.precio || p.costo || p.valor || p.cost || p.Price || Object.values(p).find(v => typeof v === 'number' || (typeof v === 'string' && v.match(/\d/)));
+      const description = p.description || p.descripcion || p.desc || p.detalle || p.details || "";
+      const category = p.category || p.categoria || p.cat || p.tipo || p.type || p.Categoria || "General";
+      const imageUrl = p.imageUrl || p.image_url || p.imagen || p.foto || p.image || p.url || p.Imagen || null;
+      
+      // Sanitización matemática del precio (extrae solo los números)
+      let price = 0;
+      if (typeof rawPrice === 'number') price = rawPrice;
+      else if (typeof rawPrice === 'string') {
+        const cleaned = rawPrice.replace(/[^0-9]/g, '');
+        price = parseFloat(cleaned) || 0;
+      }
+      
+      return {
+        name: String(name || "Producto Sin Nombre").substring(0, 255),
+        description: description ? String(description) : null,
+        price: price,
+        category: category ? String(category).substring(0, 50) : "General",
+        inStock: true, // Forzamos stock activo para catálogos nuevos
+        imageUrl: imageUrl ? String(imageUrl).substring(0, 255) : null,
+      };
+    }).filter(p => p.name !== "Producto Sin Nombre" || p.price > 0); // Filtramos filas totalmente vacías
+    
+    if (!valid.length) return res.status(400).json({ error: "El archivo no contiene productos válidos." });
+    
+    // Insertamos la data purificada en la Base de Datos
+    const inserted = await db.insert(productsTable).values(valid).returning();
+    res.status(201).json({ imported: inserted.length, products: inserted.map(formatProduct) });
+  } catch (error: any) {
+    console.error("[SaaS] Error importando catálogo:", error);
+    res.status(500).json({ error: "Error interno al procesar el archivo. Formato corrupto." });
+  }
 });
 
 function formatProduct(p: typeof productsTable.$inferSelect) {
