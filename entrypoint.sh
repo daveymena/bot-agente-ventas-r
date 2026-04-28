@@ -16,7 +16,7 @@ APP_DIR="/app"
 
 echo "🚀 [Entrypoint] Iniciando Tecnovariedades D&S..."
 
-# ── Actualización de código desde GitHub ─────────────────────────────
+# ── Actualización de código desde GitHub ────────────────────────────
 if [ -n "$GITHUB_TOKEN" ]; then
   REPO_URL="https://${GITHUB_TOKEN}@github.com/${REPO}.git"
   
@@ -61,11 +61,29 @@ fi
 
 # ── Cargar datos iniciales (productos) ─────────────────────────────
 echo "📦 [Seed] Verificando catálogo de productos..."
-if [ -f "$APP_DIR/scripts/data/products.json" ]; then
+
+# Verificar si ya hay productos (evitar duplicados)
+echo "📊 [Seed] Consultando productos existentes..."
+cd "$APP_DIR"
+PRODUCT_COUNT=$(node -e "
+const { drizzle } = require('drizzle-orm');
+const { pg } = require('drizzle-orm/pg');
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const db = drizzle({ client: pool });
+db.execute('SELECT COUNT(*) as count FROM products')
+  .then(r => { console.log(r[0]?.count || '0'); pool.end(); })
+  .catch(() => { console.log('0'); pool.end(); });
+" 2>/dev/null || echo "0")
+
+echo "📊 [Seed] Productos existentes: $PRODUCT_COUNT"
+
+if [ "$PRODUCT_COUNT" = "0" ] && [ -f "$APP_DIR/scripts/data/products.json" ]; then
+  echo "📥 [Seed] Cargando catálogo de productos..."
   cd "$APP_DIR"
-  pnpm --filter @workspace/scripts run seed 2>&1 || echo "⚠️ [Seed] Omitido (posiblemente ya cargado)"
+  pnpm --filter @workspace/scripts run seed 2>&1 || echo "⚠️ [Seed] Error al cargar productos, ver logs arriba"
 else
-  echo "⚠️ [Seed] No se encontró products.json, omitiendo..."
+  echo "✅ [Seed] Catálogo ya cargado o no se encontró products.json"
 fi
 
 # ── Arrancar el servidor ──────────────────────────────────────────
