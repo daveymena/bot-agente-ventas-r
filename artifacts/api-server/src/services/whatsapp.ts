@@ -4,11 +4,20 @@ import {
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   type WASocket,
+  makeLogger,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import QRCode from "qrcode";
 import path from "path";
 import fs from "fs";
+
+// Configurar logger de Baileys para reducir ruido
+const baileysLogger = makeLogger(
+  {
+    level: 'error', // Solo mostrar errores, no warnings ni info
+    formattedTimestamp: () => new Date().toISOString(),
+  }
+);
 
 export interface WhatsAppState {
   connected: boolean;
@@ -105,6 +114,7 @@ class WhatsAppService {
         defaultQueryTimeoutMs: 60_000,
         keepAliveIntervalMs: 30_000,
         generateHighQualityLinkPreview: false,
+        logger: baileysLogger, // Reducir logs ruidosos
       });
 
       this.sock.ev.on("creds.update", saveCreds);
