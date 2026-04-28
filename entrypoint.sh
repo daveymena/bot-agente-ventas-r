@@ -34,7 +34,7 @@ if [ -n "$GITHUB_TOKEN" ]; then
     # Primera vez → clone completo pero shallow (rápido)
     cd /tmp
     git clone --depth=1 --branch "$BRANCH" "$REPO_URL" app_code
-    # Copiar solo los archivos de código (no sobreescribir node_modules)
+    # Copiar solo los archivos de código (no sobrescribir node_modules)
     rsync -a --exclude=node_modules --exclude=.git /tmp/app_code/ "$APP_DIR/"
     rm -rf /tmp/app_code
     
@@ -50,7 +50,25 @@ else
   echo "⚠️  [Git] GITHUB_TOKEN no encontrado. Usando código de la imagen."
 fi
 
-# ── Arrancar el servidor ──────────────────────────────────────────────
+# ── Migración de base de datos ──────────────────────────────────────
+echo "🗄️ [DB] Verificando esquema de base de datos..."
+cd "$APP_DIR"
+if pnpm --filter @workspace/db run push 2>&1; then
+  echo "✅ [DB] Esquema actualizado/creado correctamente"
+else
+  echo "⚠️ [DB] Error en migración, intentando continuar..."
+fi
+
+# ── Cargar datos iniciales (productos) ─────────────────────────────
+echo "📦 [Seed] Verificando catálogo de productos..."
+if [ -f "$APP_DIR/scripts/data/products.json" ]; then
+  cd "$APP_DIR"
+  pnpm --filter @workspace/scripts run seed 2>&1 || echo "⚠️ [Seed] Omitido (posiblemente ya cargado)"
+else
+  echo "⚠️ [Seed] No se encontró products.json, omitiendo..."
+fi
+
+# ── Arrancar el servidor ──────────────────────────────────────────
 echo "🟢 [Server] Arrancando API en puerto ${PORT:-8080}..."
 cd "$APP_DIR/artifacts/api-server"
 exec node --import tsx/esm src/index.ts
