@@ -31,21 +31,24 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
     const history = await db.select().from(messagesTable).where(eq(messagesTable.conversationId, conversationId)).orderBy(messagesTable.timestamp).limit(10);
     const lowerText = text.toLowerCase();
 
-    // 2. DETECCIÓN DE PRODUCTO (Fuzzy matching por palabras clave)
+    // 2. DETECCIÓN DE PRODUCTO (Fuzzy matching local — solo como fallback cuando Hermes falla)
+    // Palabras genéricas que NO deben usarse para identificar un producto específico
+    const GENERIC_WORDS = new Set(["curso", "mega", "pack", "guia", "clase", "clases", "cursos", "packs", "guias", "modulo", "serie", "libro", "libros", "video", "videos", "contenido", "material"]);
     const products = await db.select().from(productsTable).limit(100);
-    const matchedProduct = products.find(p => {
+    const fuzzyMatch = (text: string) => products.find(p => {
       const productWords = p.name.toLowerCase()
         .split(/\s+/)
-        .filter(w => w.length > 3); // Ignorar palabras cortas como "de", "el", "la"
+        .filter(w => w.length > 3 && !GENERIC_WORDS.has(w)); // Excluir genéricas
       if (productWords.length === 0) return false;
-      const matches = productWords.filter(w => lowerText.includes(w));
-      // Coincide si al menos la mitad de las palabras clave están en el mensaje
-      return matches.length >= Math.ceil(productWords.length / 2);
+      const matches = productWords.filter(w => text.includes(w));
+      // Requiere que TODOS los términos específicos coincidan (más estricto)
+      return matches.length >= productWords.length;
     });
 
     // 3. CONSULTA AL CEREBRO HERMES (Microservicio con contexto completo)
     let finalReply = "";
     let hermesMatchedProduct = null;
+    let hermesCallSucceeded = false; // Rastrear si Hermes respondió correctamente
     const hermesUrl = process.env.HERMES_URL || "http://hermes:5000";
     
     try {
@@ -62,16 +65,22 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       });
       const hermesData: any = await hermesRes.json();
       finalReply = hermesData.response;
+      hermesCallSucceeded = true; // ✅ Hermes respondió — su decisión es autoritativa
       
       // Hermes devuelve el nombre exacto del producto que identificó por contexto
+      // Si NO devuelve matched_product_name, significa que el producto NO existe → no forzar match
       if (hermesData.matched_product_name) {
         const hermesName = hermesData.matched_product_name.toLowerCase();
         hermesMatchedProduct = products.find(p => p.name.toLowerCase() === hermesName)
           || products.find(p => p.name.toLowerCase().includes(hermesName) || hermesName.includes(p.name.toLowerCase()));
         if (hermesMatchedProduct) console.log(`[Daniel] 🎯 Hermes identificó: ${hermesMatchedProduct.name}`);
+        else console.log(`[Daniel] ⚠️ Hermes devolvió '${hermesData.matched_product_name}' pero no existe en catálogo.`);
+      } else {
+        console.log(`[Daniel] ℹ️ Hermes no identificó ningún producto específico para esta consulta.`);
       }
     } catch (e) {
       console.error("[Daniel] Fallo conexión Hermes, usando IA de respaldo.");
+      hermesCallSucceeded = false; // ❌ Hermes no disponible — usar fuzzy como respaldo
       const provider = ((config as any).aiProvider ?? "github") as AIProvider;
       
       const productsList = products.map(p => `- ${p.name}`).join("\n");
@@ -84,8 +93,10 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       finalReply = aiResp.content || "";
     }
 
-    // Hermes tiene prioridad; fuzzy matching es el fallback
-    const effectiveProduct = hermesMatchedProduct || matchedProduct;
+    // ✅ LÓGICA DE PRIORIDAD CORRECTA:
+    // - Si Hermes respondió: su decisión es FINAL. Solo mostrar tarjeta si Hermes identificó producto.
+    // - Si Hermes falló: usar fuzzy matching local como respaldo de emergencia.
+    const effectiveProduct = hermesMatchedProduct || (hermesCallSucceeded ? null : fuzzyMatch(lowerText));
 
     if (effectiveProduct) {
       // A. IMAGEN
