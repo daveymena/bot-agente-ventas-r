@@ -51,35 +51,82 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
     let hermesCallSucceeded = false; // Rastrear si Hermes respondió correctamente
     const hermesUrl = process.env.HERMES_URL || "http://hermes:5000";
     
-    try {
-      console.log(`[Daniel] 🧠 Consultando a Hermes Agent...`);
-      const hermesRes = await fetch(`${hermesUrl}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          phone: from,
-          history: history.map(m => ({ role: m.direction === "inbound" ? "user" : "assistant", content: m.content })),
-          products: products.map(p => ({ id: p.id, name: p.name, price: p.price }))
-        })
-      });
-      const hermesData: any = await hermesRes.json();
-      finalReply = hermesData.response;
-      hermesCallSucceeded = true; // ✅ Hermes respondió — su decisión es autoritativa
-      
-      // Hermes devuelve el nombre exacto del producto que identificó por contexto
-      // Si NO devuelve matched_product_name, significa que el producto NO existe → no forzar match
-      if (hermesData.matched_product_name) {
-        const hermesName = hermesData.matched_product_name.toLowerCase();
-        hermesMatchedProduct = products.find(p => p.name.toLowerCase() === hermesName)
-          || products.find(p => p.name.toLowerCase().includes(hermesName) || hermesName.includes(p.name.toLowerCase()));
-        if (hermesMatchedProduct) console.log(`[Daniel] 🎯 Hermes identificó: ${hermesMatchedProduct.name}`);
-        else console.log(`[Daniel] ⚠️ Hermes devolvió '${hermesData.matched_product_name}' pero no existe en catálogo.`);
-      } else {
-        console.log(`[Daniel] ℹ️ Hermes no identificó ningún producto específico para esta consulta.`);
+    // Función auxiliar para reintentar conectar a Hermes
+    const callHermesWithRetry = async (retries = 2): Promise<{data: any, success: boolean} | null> => {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          console.log(`[Daniel] 🧠 Consultando a Hermes Agent (intento ${attempt + 1}/${retries + 1})...`);
+          
+          // Verificar salud de Hermes antes de consultar (solo en primer intento)
+          if (attempt === 0) {
+            try {
+              const healthCheck = await fetch(`${hermesUrl}/health`, { 
+                method: "GET",
+                signal: AbortSignal.timeout(3000) 
+              });
+              if (!healthCheck.ok) {
+                throw new Error(`Health check failed: ${healthCheck.status}`);
+              }
+              console.log(`[Daniel] ✅ Hermes Agent está saludable`);
+            } catch (healthErr: any) {
+              console.log(`[Daniel] ⚠️ Hermes no disponible: ${healthErr.message}`);
+              if (attempt === retries) throw healthErr;
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // Esperar antes de reintentar
+              continue;
+            }
+          }
+
+          const hermesRes = await fetch(`${hermesUrl}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              phone: from,
+              history: history.map(m => ({ role: m.direction === "inbound" ? "user" : "assistant", content: m.content })),
+              products: products.map(p => ({ id: p.id, name: p.name, price: p.price }))
+            }),
+            signal: AbortSignal.timeout(30000) // 30s timeout
+          });
+
+          if (!hermesRes.ok) {
+            throw new Error(`Status ${hermesRes.status}: ${await hermesRes.text()}`);
+          }
+
+          const hermesData = await hermesRes.json();
+          return { data: hermesData, success: true };
+        } catch (err: any) {
+          console.log(`[Daniel] ⚠️ Intento ${attempt + 1} falló: ${err.message}`);
+          if (attempt === retries) return null;
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // Backoff exponencial simple
+        }
       }
-    } catch (e) {
-      console.error("[Daniel] Fallo conexión Hermes, usando IA de respaldo.");
+      return null;
+    };
+
+    try {
+      const hermesResult = await callHermesWithRetry(2);
+      
+      if (hermesResult && hermesResult.success) {
+        const hermesData = hermesResult.data;
+        finalReply = hermesData.response;
+        hermesCallSucceeded = true; // ✅ Hermes respondió — su decisión es autoritativa
+        
+        // Hermes devuelve el nombre exacto del producto que identificó por contexto
+        // Si NO devuelve matched_product_name, significa que el producto NO existe → no forzar match
+        if (hermesData.matched_product_name) {
+          const hermesName = hermesData.matched_product_name.toLowerCase();
+          hermesMatchedProduct = products.find(p => p.name.toLowerCase() === hermesName)
+            || products.find(p => p.name.toLowerCase().includes(hermesName) || hermesName.includes(p.name.toLowerCase()));
+          if (hermesMatchedProduct) console.log(`[Daniel] 🎯 Hermes identificó: ${hermesMatchedProduct.name}`);
+          else console.log(`[Daniel] ⚠️ Hermes devolvió '${hermesData.matched_product_name}' pero no existe en catálogo.`);
+        } else {
+          console.log(`[Daniel] ℹ️ Hermes no identificó ningún producto específico para esta consulta.`);
+        }
+      } else {
+        throw new Error("Hermes no respondió después de reintentos");
+      }
+    } catch (e: any) {
+      console.error(`[Daniel] ❌ Fallo Hermes definitivo: ${e.message}`);
       hermesCallSucceeded = false; // ❌ Hermes no disponible — usar fuzzy como respaldo
       const provider = ((config as any).aiProvider ?? "github") as AIProvider;
       
