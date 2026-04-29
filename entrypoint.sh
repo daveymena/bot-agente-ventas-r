@@ -54,7 +54,16 @@ fi
 echo "🗄️ [DB] Verificando esquema de base de datos..."
 cd "$APP_DIR"
 
-# Intentar migración con reintentos
+# PASO 1: Crear tablas base con psql directo (fallback seguro)
+echo "🔧 [DB] Paso 1: Crear tablas base si no existen..."
+if [ -f "$APP_DIR/setup-db.sh" ]; then
+  bash "$APP_DIR/setup-db.sh" || echo "⚠️ Setup de tablas falló, intentando con drizzle..."
+else
+  echo "⚠️ setup-db.sh no encontrado, saltando creación manual"
+fi
+
+# PASO 2: Intentar migración con drizzle (reintentos)
+echo "🔧 [DB] Paso 2: Sincronizar esquema con drizzle..."
 DB_RETRIES=3
 for i in $(seq 1 $DB_RETRIES); do
   echo "📊 [DB] Intento $i/$DB_RETRIES de migración..."
@@ -68,7 +77,7 @@ for i in $(seq 1 $DB_RETRIES); do
     else
       echo "⚠️ [DB] Migración fallida después de $DB_RETRIES intentos"
       echo "📝 [DB] Logs:"
-      cat /tmp/db_migration.log
+      cat /tmp/db_migration.log || true
     fi
   fi
 done
