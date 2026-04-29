@@ -54,12 +54,12 @@ fi
 echo "🗄️ [DB] Verificando esquema de base de datos..."
 cd "$APP_DIR"
 
-# PASO 1: Crear tablas base con psql directo (fallback seguro)
+# PASO 1: Crear tablas base con Node.js + pg (sin psql)
 echo "🔧 [DB] Paso 1: Crear tablas base si no existen..."
-if [ -f "$APP_DIR/setup-db.sh" ]; then
-  bash "$APP_DIR/setup-db.sh" || echo "⚠️ Setup de tablas falló, intentando con drizzle..."
+if [ -f "$APP_DIR/setup-db.js" ]; then
+  node "$APP_DIR/setup-db.js" || echo "⚠️ Setup de tablas falló, intentando con drizzle..."
 else
-  echo "⚠️ setup-db.sh no encontrado, saltando creación manual"
+  echo "⚠️ setup-db.js no encontrado, saltando creación manual"
 fi
 
 # PASO 2: Intentar migración con drizzle (reintentos)
