@@ -53,37 +53,82 @@ fi
 # ── Migración de base de datos ──────────────────────────────────────
 echo "🗄️ [DB] Verificando esquema de base de datos..."
 cd "$APP_DIR"
-if pnpm --filter @workspace/db run push 2>&1; then
-  echo "✅ [DB] Esquema actualizado/creado correctamente"
-else
-  echo "⚠️ [DB] Error en migración, intentando continuar..."
-fi
+
+# Intentar migración con reintentos
+DB_RETRIES=3
+for i in $(seq 1 $DB_RETRIES); do
+  echo "📊 [DB] Intento $i/$DB_RETRIES de migración..."
+  if pnpm --filter @workspace/db run push 2>&1 | tee /tmp/db_migration.log; then
+    echo "✅ [DB] Esquema actualizado/creado correctamente"
+    break
+  else
+    if [ $i -lt $DB_RETRIES ]; then
+      echo "⚠️ [DB] Intento $i falló, reintentando en 5 segundos..."
+      sleep 5
+    else
+      echo "⚠️ [DB] Migración fallida después de $DB_RETRIES intentos"
+      echo "📝 [DB] Logs:"
+      cat /tmp/db_migration.log
+    fi
+  fi
+done
 
 # ── Cargar datos iniciales (productos) ─────────────────────────────
 echo "📦 [Seed] Verificando catálogo de productos..."
 
+# Esperar a que la BD esté lista
+sleep 3
+
 # Verificar si ya hay productos (evitar duplicados)
 echo "📊 [Seed] Consultando productos existentes..."
 cd "$APP_DIR"
-PRODUCT_COUNT=$(node -e "
-const { drizzle } = require('drizzle-orm');
-const { pg } = require('drizzle-orm/pg');
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle({ client: pool });
-db.execute('SELECT COUNT(*) as count FROM products')
-  .then(r => { console.log(r[0]?.count || '0'); pool.end(); })
-  .catch(() => { console.log('0'); pool.end(); });
-" 2>/dev/null || echo "0")
+
+PRODUCT_COUNT=0
+for i in $(seq 1 3); do
+  PRODUCT_COUNT=$(node -e "
+  const pg = require('pg');
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, statement_timeout: 5000 });
+  (async () => {
+    try {
+      const res = await pool.query('SELECT COUNT(*) as count FROM products');
+      console.log(res.rows[0]?.count || '0');
+    } catch (err) {
+      console.log('0');
+    }
+    pool.end();
+  })();
+  " 2>/dev/null || echo "0")
+  
+  if [ "$PRODUCT_COUNT" != "0" ]; then
+    break
+  fi
+  
+  if [ $i -lt 3 ]; then
+    echo "⏳ [Seed] Reintentando consulta de productos (intento $i/3)..."
+    sleep 2
+  fi
+done
 
 echo "📊 [Seed] Productos existentes: $PRODUCT_COUNT"
 
 if [ "$PRODUCT_COUNT" = "0" ] && [ -f "$APP_DIR/scripts/data/products.json" ]; then
   echo "📥 [Seed] Cargando catálogo de productos..."
   cd "$APP_DIR"
-  pnpm --filter @workspace/scripts run seed 2>&1 || echo "⚠️ [Seed] Error al cargar productos, ver logs arriba"
+  for i in $(seq 1 2); do
+    if pnpm --filter @workspace/scripts run seed 2>&1; then
+      echo "✅ [Seed] Catálogo cargado exitosamente"
+      break
+    else
+      if [ $i -lt 2 ]; then
+        echo "⚠️ [Seed] Intento $i falló, reintentando..."
+        sleep 3
+      else
+        echo "⚠️ [Seed] Error al cargar productos después de 2 intentos"
+      fi
+    fi
+  done
 else
-  echo "✅ [Seed] Catálogo ya cargado o no se encontró products.json"
+  echo "✅ [Seed] Catálogo ya cargado o no se encontró products.json (count: $PRODUCT_COUNT)"
 fi
 
 # ── Arrancar el servidor ──────────────────────────────────────────
