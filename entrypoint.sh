@@ -145,6 +145,18 @@ else
 fi
 
 # ── Arrancar el servidor ──────────────────────────────────────────
+echo "🟢 [Server] Preparando frontend..."
+cd "$APP_DIR/artifacts/whatsapp-bot"
+
+# Compilar frontend si no existe dist/
+if [ ! -d "dist" ]; then
+  echo "📦 [Frontend] Compilando React app..."
+  pnpm install && pnpm run build
+  echo "✅ [Frontend] Compilado exitosamente"
+else
+  echo "✅ [Frontend] Build ya existe, omitiendo compilación"
+fi
+
 echo "🟢 [Server] Arrancando API en puerto ${PORT:-8080}..."
 cd "$APP_DIR/artifacts/api-server"
 exec node --import tsx/esm src/index.ts
