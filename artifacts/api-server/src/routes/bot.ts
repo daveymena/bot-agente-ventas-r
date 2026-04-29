@@ -31,19 +31,47 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
     const history = await db.select().from(messagesTable).where(eq(messagesTable.conversationId, conversationId)).orderBy(messagesTable.timestamp).limit(10);
     const lowerText = text.toLowerCase();
 
-    // 2. DETECCIÓN DE PRODUCTO (Fuzzy matching local — solo como fallback cuando Hermes falla)
+    // 2. DETECCIÓN DE PRODUCTO AVANZADA (Fuzzy matching local — solo como fallback cuando Hermes falla)
     // Palabras genéricas que NO deben usarse para identificar un producto específico
-    const GENERIC_WORDS = new Set(["curso", "mega", "pack", "guia", "clase", "clases", "cursos", "packs", "guias", "modulo", "serie", "libro", "libros", "video", "videos", "contenido", "material"]);
-    const products = await db.select().from(productsTable).limit(100);
-    const fuzzyMatch = (text: string) => products.find(p => {
-      const productWords = p.name.toLowerCase()
-        .split(/\s+/)
-        .filter(w => w.length > 3 && !GENERIC_WORDS.has(w)); // Excluir genéricas
-      if (productWords.length === 0) return false;
-      const matches = productWords.filter(w => text.includes(w));
-      // Requiere que TODOS los términos específicos coincidan (más estricto)
-      return matches.length >= productWords.length;
-    });
+    const GENERIC_WORDS = new Set(["curso", "mega", "pack", "guia", "clase", "clases", "cursos", "packs", "guias", "modulo", "serie", "libro", "libros", "video", "videos", "contenido", "material", "servicio", "servicios"]);
+    const products = await db.select().from(productsTable).limit(500); // Aumentar límite
+    
+    // Función mejorada de búsqueda de producto
+    const fuzzyMatch = (text: string) => {
+      // Primero: buscar coincidencia exacta o parcial en nombre
+      const directMatch = products.find(p => p.name.toLowerCase().includes(text));
+      if (directMatch) return directMatch;
+      
+      // Segundo: búsqueda por palabras clave (excluyendo genéricas)
+      return products.find(p => {
+        const productWords = p.name.toLowerCase()
+          .split(/\s+/)
+          .filter(w => w.length > 3 && !GENERIC_WORDS.has(w)); // Excluir genéricas
+        if (productWords.length === 0) return false;
+        const matches = productWords.filter(w => text.includes(w));
+        // Requiere que TODOS los términos específicos coincidan (más estricto)
+        return matches.length >= productWords.length;
+      });
+    };
+    
+    // Función auxiliar para búsqueda por categoría
+    const searchByCategory = (text: string) => {
+      const categoryKeywords = {
+        'diseño': ['diseño', 'photoshop', 'ilustrador', 'figma', 'adobe'],
+        'programación': ['python', 'javascript', 'java', 'código', 'programacion'],
+        'marketing': ['marketing', 'social', 'seo', 'copywriting', 'email'],
+        'negocios': ['negocio', 'emprendimiento', 'finanzas', 'economía'],
+        'idiomas': ['inglés', 'español', 'idioma', 'traducción', 'course language'],
+        'piano': ['piano', 'música', 'instrumento'],
+      };
+      
+      for (const [category, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some(kw => text.includes(kw))) {
+          return products.filter(p => p.category?.toLowerCase() === category || p.name.toLowerCase().includes(category))[0];
+        }
+      }
+      return null;
+    };
 
     // 3. CONSULTA AL CEREBRO HERMES (Microservicio con contexto completo)
     let finalReply = "";
@@ -130,12 +158,42 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
       hermesCallSucceeded = false; // ❌ Hermes no disponible — usar fuzzy como respaldo
       const provider = ((config as any).aiProvider ?? "github") as AIProvider;
       
-      const productsList = products.map(p => `- ${p.name}`).join("\n");
-      const systemPromptWithProducts = `${config.systemPrompt}\n\n[CATÁLOGO DISPONIBLE]:\n${productsList}\n\nREGLAS ESTRICTAS:\n1. Responde SOLO 1-2 líneas breves si preguntan por un producto.\n2. NUNCA escribas precios ni detalles, el sistema envía la tarjeta automáticamente.\n3. NUNCA uses cajas ASCII como ┌───.\n4. No saludes si ya hay historial.`;
+      // Construir catálogo dinámico con toda la información disponible
+      const productsList = products.slice(0, 200).map(p => 
+        `- ${p.name} (${p.category || 'general'}): ${p.price} COP`
+      ).join("\n");
+      
+      const systemPromptWithProducts = `${config.systemPrompt}
+
+[CATÁLOGO DISPONIBLE]:
+${productsList}
+
+REGLAS ESTRICTAS:
+1. Responde SOLO 1-2 líneas breves si preguntan por un producto.
+2. NUNCA escribas precios ni detalles, el sistema envía la tarjeta automáticamente.
+3. NUNCA uses cajas ASCII como ┌───.
+4. No saludes si ya hay historial.
+5. Si el cliente pregunta por algo que NO existe en el catálogo, sugiere alternativas relevantes.
+6. Mantén un tono cálido, profesional y vendedor.`;
+
+      // Usar historial completo para mejor contexto
+      const messageHistory = history.map(m => ({ 
+        role: m.direction === "inbound" ? "user" as const : "assistant" as const, 
+        content: m.content 
+      }));
 
       const aiResp = await callAI(
-        [{ role: "system", content: systemPromptWithProducts }, ...history.map(m => ({ role: m.direction === "inbound" ? "user" as const : "assistant" as const, content: m.content })), { role: "user", content: text }],
-        { provider, apiKey: (config as any).aiApiKey, model: (config as any).aiModel || "gpt-4o-mini", temperature: 0.5 }
+        [
+          { role: "system", content: systemPromptWithProducts }, 
+          ...messageHistory, 
+          { role: "user", content: text }
+        ],
+        { 
+          provider, 
+          apiKey: (config as any).aiApiKey, 
+          model: (config as any).aiModel || "gpt-4o-mini", 
+          temperature: 0.5 
+        }
       );
       finalReply = aiResp.content || "";
     }
@@ -143,7 +201,11 @@ whatsappService.setMessageHandler(async ({ from, text }) => {
     // ✅ LÓGICA DE PRIORIDAD CORRECTA:
     // - Si Hermes respondió: su decisión es FINAL. Solo mostrar tarjeta si Hermes identificó producto.
     // - Si Hermes falló: usar fuzzy matching local como respaldo de emergencia.
-    const effectiveProduct = hermesMatchedProduct || (hermesCallSucceeded ? null : fuzzyMatch(lowerText));
+    // - Intentar búsqueda por categoría como último recurso
+    let effectiveProduct = hermesMatchedProduct;
+    if (!effectiveProduct && !hermesCallSucceeded) {
+      effectiveProduct = fuzzyMatch(lowerText) || searchByCategory(lowerText);
+    }
 
     if (effectiveProduct) {
       // A. IMAGEN
