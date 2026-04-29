@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * FORCE DB SETUP - Crear tablas si no existen
- * Se ejecuta ANTES del API server en EasyPanel
- * Usa Node.js + pg client (disponible en todos lados)
+ * FORCE DB SETUP - Create ALL tables if they don't exist
+ * Uses Node.js + pg (no psql needed)
+ * Covers all tables from lib/db/src/schema/index.ts
  */
 
 const pg = require('pg');
@@ -10,13 +10,28 @@ const { Pool } = pg;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error('❌ DATABASE_URL no está configurado');
+  console.error('❌ DATABASE_URL not configured');
   process.exit(1);
 }
 
 const pool = new Pool({ connectionString: DATABASE_URL, statement_timeout: 30000 });
 
 const SQL_STATEMENTS = [
+  {
+    name: 'categories',
+    sql: `CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY DEFAULT crypto.randomUUID(),
+      name TEXT NOT NULL UNIQUE,
+      slug TEXT NOT NULL UNIQUE,
+      description TEXT,
+      icon TEXT,
+      color TEXT,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      product_count INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );`
+  },
   {
     name: 'products',
     sql: `CREATE TABLE IF NOT EXISTS products (
@@ -25,7 +40,7 @@ const SQL_STATEMENTS = [
       description TEXT,
       price BIGINT NOT NULL,
       category VARCHAR(100),
-      category_id UUID,
+      category_id TEXT REFERENCES categories(id),
       in_stock BOOLEAN DEFAULT true,
       image_url VARCHAR(500),
       featured BOOLEAN DEFAULT false,
@@ -93,28 +108,77 @@ const SQL_STATEMENTS = [
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     );`
+  },
+  {
+    name: 'automation_rules',
+    sql: `CREATE TABLE IF NOT EXISTS automation_rules (
+      id TEXT PRIMARY KEY DEFAULT crypto.randomUUID(),
+      name TEXT NOT NULL,
+      trigger TEXT NOT NULL,
+      trigger_value TEXT,
+      action TEXT NOT NULL,
+      action_value TEXT,
+      enabled BOOLEAN NOT NULL DEFAULT true,
+      priority INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    );`
+  },
+  {
+    name: 'memories',
+    sql: `CREATE TABLE IF NOT EXISTS memories (
+      id TEXT PRIMARY KEY DEFAULT crypto.randomUUID(),
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      tags TEXT DEFAULT '',
+      source TEXT DEFAULT 'manual',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );`
+  },
+  {
+    name: 'skills',
+    sql: `CREATE TABLE IF NOT EXISTS skills (
+      id TEXT PRIMARY KEY DEFAULT crypto.randomUUID(),
+      name TEXT NOT NULL UNIQUE,
+      description TEXT NOT NULL,
+      code TEXT NOT NULL,
+      parameters_schema TEXT NOT NULL DEFAULT '{}',
+      enabled BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );`
+  },
+  {
+    name: 'agent_sessions',
+    sql: `CREATE TABLE IF NOT EXISTS agent_sessions (
+      id TEXT PRIMARY KEY DEFAULT crypto.randomUUID(),
+      title TEXT NOT NULL DEFAULT 'New Session',
+      messages TEXT NOT NULL DEFAULT '[]',
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );`
   }
 ];
 
 async function setupDatabase() {
-  console.log('🔧 [DB-Force] Verificando y creando tablas si es necesario...');
+  console.log('🔧 [DB-Force] Creating/verifying all database tables...');
   
   try {
     for (const { name, sql } of SQL_STATEMENTS) {
       try {
-        console.log(`📝 [DB-Force] Creando tabla '${name}' si no existe...`);
+        console.log(`📝 [DB-Force] Creating table '${name}' if not exists...`);
         await pool.query(sql);
-        console.log(`✅ Tabla '${name}' lista`);
+        console.log(`✅ Table '${name}' ready`);
       } catch (err) {
-        console.log(`⚠️ Tabla '${name}': ${err.message.substring(0, 60)}`);
+        console.log(`⚠️ Table '${name}': ${err.message.substring(0, 80)}`);
       }
     }
     
-    console.log('✅ [DB-Force] Tablas base creadas/verificadas');
+    console.log('✅ [DB-Force] All tables created/verified');
     await pool.end();
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error fatal:', err.message);
+    console.error('❌ Fatal error:', err.message);
     await pool.end();
     process.exit(1);
   }
