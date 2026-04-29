@@ -55,32 +55,43 @@ echo "🗄️ [DB] Verificando esquema de base de datos..."
 cd "$APP_DIR"
 
 # PASO 1: Crear tablas base con Node.js + pg (sin psql)
-echo "🔧 [DB] Paso 1: Crear tablas base si no existen..."
+echo "🔧 [DB] Paso 1: Crear/verificar tablas con Node.js..."
+DB_SETUP_SUCCESS=false
 if [ -f "$APP_DIR/setup-db.js" ]; then
-  node "$APP_DIR/setup-db.js" || echo "⚠️ Setup de tablas falló, intentando con drizzle..."
+  if node "$APP_DIR/setup-db.js" 2>&1; then
+    echo "✅ [DB] Tablas creadas/verificadas con setup-db.js"
+    DB_SETUP_SUCCESS=true
+  else
+    echo "⚠️ [DB] setup-db.js falló, intentando con drizzle..."
+  fi
 else
-  echo "⚠️ setup-db.js no encontrado, saltando creación manual"
+  echo "⚠️ setup-db.js no encontrado"
 fi
 
-# PASO 2: Intentar migración con drizzle (reintentos)
-echo "🔧 [DB] Paso 2: Sincronizar esquema con drizzle..."
-DB_RETRIES=3
-for i in $(seq 1 $DB_RETRIES); do
-  echo "📊 [DB] Intento $i/$DB_RETRIES de migración..."
-  if pnpm --filter @workspace/db run push 2>&1 | tee /tmp/db_migration.log; then
-    echo "✅ [DB] Esquema actualizado/creado correctamente"
-    break
-  else
-    if [ $i -lt $DB_RETRIES ]; then
-      echo "⚠️ [DB] Intento $i falló, reintentando en 5 segundos..."
-      sleep 5
+# PASO 2: Intentar migración con drizzle SOLO si setup-db.js falló
+if [ "$DB_SETUP_SUCCESS" != "true" ]; then
+  echo "🔧 [DB] Paso 2: Sincronizar esquema con drizzle..."
+  DB_RETRIES=2
+  for i in $(seq 1 $DB_RETRIES); do
+    echo "📊 [DB] Intento $i/$DB_RETRIES de migración..."
+    if pnpm --filter @workspace/db run push 2>&1 | tee /tmp/db_migration.log; then
+      echo "✅ [DB] Esquema actualizado/creado correctamente"
+      break
     else
-      echo "⚠️ [DB] Migración fallida después de $DB_RETRIES intentos"
-      echo "📝 [DB] Logs:"
-      cat /tmp/db_migration.log || true
+      if [ $i -lt $DB_RETRIES ]; then
+        echo "⚠️ [DB] Intento $i falló, reintentando en 5 segundos..."
+        sleep 5
+      else
+        echo "⚠️ [DB] Migración fallida después de $DB_RETRIES intentos"
+        echo "📝 [DB] Logs:"
+        cat /tmp/db_migration.log || true
+        echo "⚠️ [DB] Continuando de todos modos (las tablas podrían estar listas)..."
+      fi
     fi
-  fi
-done
+  done
+else
+  echo "✅ [DB] Omitiendo drizzle-kit (setup-db.js fue exitoso)"
+fi
 
 # ── Cargar datos iniciales (productos) ─────────────────────────────
 echo "📦 [Seed] Verificando catálogo de productos..."
