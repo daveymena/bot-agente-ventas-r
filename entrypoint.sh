@@ -1,11 +1,6 @@
 #!/bin/bash
 # =====================================================
 # ENTRYPOINT INTELIGENTE - Tecnovariedades D&S
-# 
-# Modo de operación:
-#  - Si GITHUB_TOKEN existe: descarga el último código de GitHub al arrancar.
-#    Para actualizar el código = solo REINICIAR el contenedor (segundos).
-#  - Si no: usa el código que viene en la imagen (fallback seguro).
 # =====================================================
 
 set -e
@@ -16,7 +11,7 @@ APP_DIR="/app"
 
 echo "🚀 [Entrypoint] Iniciando Tecnovariedades D&S..."
 
-# ── Actualización de código desde GitHub ────────────────────────────
+# ── Actualización de código desde GitHub ────────────────────
 if [ -n "$GITHUB_TOKEN" ]; then
   REPO_URL="https://${GITHUB_TOKEN}@github.com/${REPO}.git"
   
@@ -38,6 +33,12 @@ if [ -n "$GITHUB_TOKEN" ]; then
     rsync -a --exclude=node_modules --exclude=.git /tmp/app_code/ "$APP_DIR/"
     rm -rf /tmp/app_code
     
+    # Instalar dependencias (necesario para setup-db.js)
+    echo "📦 [NPM] Instalando dependencias..."
+    cd "$APP_DIR"
+    pnpm install --frozen-lockfile || pnpm install
+    echo "✅ [NPM] Dependencias instaladas"
+    
     # Inicializar git en app para futuros pulls
     cd "$APP_DIR"
     git init
@@ -48,6 +49,13 @@ if [ -n "$GITHUB_TOKEN" ]; then
   fi
 else
   echo "⚠️  [Git] GITHUB_TOKEN no encontrado. Usando código de la imagen."
+fi
+
+# Asegurar que pg esté disponible para setup-db.js
+if ! node -e "require('pg')" 2>/dev/null; then
+  echo "📦 [NPM] Instalando pg para setup-db.js..."
+  cd "$APP_DIR"
+  pnpm add pg --save || npm install pg
 fi
 
 # ── Migración de base de datos ──────────────────────────────────────
