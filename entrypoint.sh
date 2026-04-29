@@ -94,61 +94,46 @@ else
 fi
 
 # ── Cargar datos iniciales (productos) ─────────────────────────────
-echo "📦 [Seed] Verificando catálogo de productos..."
-
-# Esperar a que la BD esté lista
-sleep 3
-
-# Verificar si ya hay productos (evitar duplicados)
-echo "📊 [Seed] Consultando productos existentes..."
+echo "📦 [Seed] Cargando catálogo de productos..."
 cd "$APP_DIR"
 
-PRODUCT_COUNT=0
-for i in $(seq 1 3); do
-  PRODUCT_COUNT=$(node -e "
-  const pg = require('pg');
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, statement_timeout: 5000 });
-  (async () => {
-    try {
-      const res = await pool.query('SELECT COUNT(*) as count FROM products');
-      console.log(res.rows[0]?.count || '0');
-    } catch (err) {
-      console.log('0');
-    }
-    pool.end();
-  })();
-  " 2>/dev/null || echo "0")
+if [ -f "$APP_DIR/scripts/data/products.json" ]; then
+  echo "📥 [Seed] Archivo products.json encontrado ($(wc -c < "$APP_DIR/scripts/data/products.json") bytes)"
   
-  if [ "$PRODUCT_COUNT" != "0" ]; then
-    break
-  fi
+  # Limpiar tabla de productos y volver a cargar (asegura 81 productos)
+  echo "📊 [Seed] Limpiando tabla products (si existe)..."
+  node -e "
+    const pg = require('pg');
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, statement_timeout: 10000 });
+    (async () => {
+      try {
+        await pool.query('DELETE FROM products');
+        console.log('✅ Tabla products limpiada');
+      } catch (err) {
+        console.log('⚠️ No se pudo limpiar (tabla quizás no existe)');
+      }
+      pool.end();
+    })();
+  " 2>/dev/null || true
   
-  if [ $i -lt 3 ]; then
-    echo "⏳ [Seed] Reintentando consulta de productos (intento $i/3)..."
-    sleep 2
-  fi
-done
-
-echo "📊 [Seed] Productos existentes: $PRODUCT_COUNT"
-
-if [ "$PRODUCT_COUNT" = "0" ] && [ -f "$APP_DIR/scripts/data/products.json" ]; then
   echo "📥 [Seed] Cargando catálogo de productos..."
-  cd "$APP_DIR"
   for i in $(seq 1 2); do
     if pnpm --filter @workspace/scripts run seed 2>&1; then
       echo "✅ [Seed] Catálogo cargado exitosamente"
       break
     else
       if [ $i -lt 2 ]; then
-        echo "⚠️ [Seed] Intento $i falló, reintentando..."
+        echo "⚠️ [Seed] Intento $i falló, reintentando en 3 segundos..."
         sleep 3
       else
         echo "⚠️ [Seed] Error al cargar productos después de 2 intentos"
+        echo "📝 [Seed] Verificando por qué falló..."
+        node "$APP_DIR/test-db.js" 2>&1 | head -20 || true
       fi
     fi
   done
 else
-  echo "✅ [Seed] Catálogo ya cargado o no se encontró products.json (count: $PRODUCT_COUNT)"
+  echo "❌ [Seed] No se encontró products.json en $APP_DIR/scripts/data/"
 fi
 
 # ── Arrancar el servidor ──────────────────────────────────────────
